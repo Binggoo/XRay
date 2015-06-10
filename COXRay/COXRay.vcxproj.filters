@@ -1,0 +1,377 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Led">
+      <UniqueIdentifier>{49034517-3fdf-4dc3-9880-bbd770c3c909}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{7d182a49-906f-4ea7-831f-75c1becc6d67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dlg">
+      <UniqueIdentifier>{b648bbbe-6a30-46cc-8a89-7481eb39d4d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="xis">
+      <UniqueIdentifier>{2331b227-4962-4e31-b429-5ee4b635155f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lisence">
+      <UniqueIdentifier>{f9040930-ecbb-4d80-b1f2-178d6f072fbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PLC">
+      <UniqueIdentifier>{5ded011f-771a-4348-a8eb-3f765bf69a0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Light">
+      <UniqueIdentifier>{3512c768-fcdc-4b3b-8499-a3391a270a36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="database">
+      <UniqueIdentifier>{695054b7-c6f4-4d1a-8af3-b64422232994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ext">
+      <UniqueIdentifier>{009fe4a6-8990-4f9f-80ed-744933c800ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="page">
+      <UniqueIdentifier>{7c1ac2f3-1666-4cc6-aeed-62fdac688d37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dialogbar">
+      <UniqueIdentifier>{3033804b-facf-424b-9460-1c0cf2b13ade}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImageProcess">
+      <UniqueIdentifier>{1eb2b9aa-f77d-4cf8-a63e-2d4291e7e83f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\COXRay.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\COXRayDoc.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\COXRay.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="..\Led\Icons\LedGreen.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="..\Led\Icons\LedNone.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="..\Led\Icons\LedRed.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="test.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="COXRay.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="COXRayDoc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="COXRayView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Led\LedButton.h">
+      <Filter>Led</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Meter\Meter.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\BtnST.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Ini.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\XorCode.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Stopwatch.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="FilterMeanDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="FilterMedianDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="ThresholdDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="RotateDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="FilterEnhanceDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="FilterGaussDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lisence\Lisence.h">
+      <Filter>lisence</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PaneSettingDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="PenSettingDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="CalibrationSettingDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="PLCCommand.h">
+      <Filter>PLC</Filter>
+    </ClInclude>
+    <ClInclude Include="CommSettingDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\SerialPort.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\EnumSerial.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="LightControl.h">
+      <Filter>Light</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaceTextDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="StepSetPath.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="StepTips.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\mysql\MySql.h">
+      <Filter>database</Filter>
+    </ClInclude>
+    <ClInclude Include="MyDatabase.h">
+      <Filter>database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Markup.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="Histogram.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamma.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="HistogramDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="LightSettingDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="PageImgCapture.h">
+      <Filter>page</Filter>
+    </ClInclude>
+    <ClInclude Include="PageImageProcess.h">
+      <Filter>page</Filter>
+    </ClInclude>
+    <ClInclude Include="PageFilterParm.h">
+      <Filter>page</Filter>
+    </ClInclude>
+    <ClInclude Include="PageData.h">
+      <Filter>page</Filter>
+    </ClInclude>
+    <ClInclude Include="RightDialogBar.h">
+      <Filter>dialogbar</Filter>
+    </ClInclude>
+    <ClInclude Include="BottomDialogBar.h">
+      <Filter>dialogbar</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectEditDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectNewDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="SaveSettingDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imageprocess\ImageProcess.h">
+      <Filter>ImageProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xis\pane.h">
+      <Filter>xis</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="COXRay.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="COXRayDoc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="COXRayView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Led\LedButton.cpp">
+      <Filter>Led</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Meter\Meter.cpp">
+      <Filter>ext</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\BtnST.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Ini.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Utils.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\XorCode.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Stopwatch.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="FilterMeanDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="FilterMedianDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="RotateDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ThresholdDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="FilterEnhanceDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="FilterGaussDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="PaneSettingDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="PenSettingDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="CalibrationSettingDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="PLCCommand.cpp">
+      <Filter>PLC</Filter>
+    </ClCompile>
+    <ClCompile Include="CommSettingDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\SerialPort.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\EnumSerial.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="LightControl.cpp">
+      <Filter>Light</Filter>
+    </ClCompile>
+    <ClCompile Include="PlaceTextDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="StepSetPath.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="StepTips.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\mysql\MySql.cpp">
+      <Filter>database</Filter>
+    </ClCompile>
+    <ClCompile Include="MyDatabase.cpp">
+      <Filter>database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Markup.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="Histogram.cpp">
+      <Filter>ext</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamma.cpp">
+      <Filter>ext</Filter>
+    </ClCompile>
+    <ClCompile Include="PageFilterParm.cpp">
+      <Filter>page</Filter>
+    </ClCompile>
+    <ClCompile Include="PageImgCapture.cpp">
+      <Filter>page</Filter>
+    </ClCompile>
+    <ClCompile Include="PageImageProcess.cpp">
+      <Filter>page</Filter>
+    </ClCompile>
+    <ClCompile Include="PageData.cpp">
+      <Filter>page</Filter>
+    </ClCompile>
+    <ClCompile Include="RightDialogBar.cpp">
+      <Filter>dialogbar</Filter>
+    </ClCompile>
+    <ClCompile Include="BottomDialogBar.cpp">
+      <Filter>dialogbar</Filter>
+    </ClCompile>
+    <ClCompile Include="HistogramDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="LightSettingDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectEditDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectNewDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="SaveSettingDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="COXRay.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\Lisence\Lisence.lib">
+      <Filter>lisence</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

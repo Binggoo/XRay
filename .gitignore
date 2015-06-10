@@ -1,0 +1,17 @@
+*.zip
+*.rar
+*.exe
+*.sdf
+*.pdb
+*.7z
+*.user
+*.suo
+*.aps
+x64
+Win32
+ipch
+Debug
+Release
+bin
+ipch
+doc

@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{42452898-BCA6-4BA8-860E-7A244BCF1BCC}</ProjectGuid>
+    <RootNamespace>COXRay</RootNamespace>
+    <Keyword>MFCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>halconcpp.lib;opencv_core249d.lib;opencv_highgui249d.lib;libmysql.lib;ImageProcessd.lib;paned.lib</AdditionalDependencies>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib;../xis;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0804</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>halconcpp.lib;opencv_core249.lib;opencv_highgui249.lib;libmysql.lib;ImageProcessd.lib;pane.lib</AdditionalDependencies>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib;../xis</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>libcpmt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0804</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="..\Led\Icons\LedGreen.ico" />
+    <None Include="..\Led\Icons\LedNone.ico" />
+    <None Include="..\Led\Icons\LedRed.ico" />
+    <None Include="ReadMe.txt" />
+    <None Include="res\COXRay.ico" />
+    <None Include="res\COXRay.rc2" />
+    <None Include="res\COXRayDoc.ico" />
+    <None Include="test.xml">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\common\BtnST.h" />
+    <ClInclude Include="..\common\EnumSerial.h" />
+    <ClInclude Include="..\common\Ini.h" />
+    <ClInclude Include="..\common\Markup.h" />
+    <ClInclude Include="..\common\mysql\MySql.h" />
+    <ClInclude Include="..\common\SerialPort.h" />
+    <ClInclude Include="..\common\Stopwatch.h" />
+    <ClInclude Include="..\common\Utils.h" />
+    <ClInclude Include="..\common\XorCode.h" />
+    <ClInclude Include="..\imageprocess\ImageProcess.h" />
+    <ClInclude Include="..\Led\LedButton.h" />
+    <ClInclude Include="..\Lisence\Lisence.h" />
+    <ClInclude Include="..\Meter\Meter.h" />
+    <ClInclude Include="..\xis\pane.h" />
+    <ClInclude Include="BottomDialogBar.h" />
+    <ClInclude Include="CalibrationSettingDlg.h" />
+    <ClInclude Include="CommonDef.h" />
+    <ClInclude Include="CommSettingDlg.h" />
+    <ClInclude Include="COXRay.h" />
+    <ClInclude Include="COXRayDoc.h" />
+    <ClInclude Include="COXRayView.h" />
+    <ClInclude Include="FilterEnhanceDlg.h" />
+    <ClInclude Include="FilterGaussDlg.h" />
+    <ClInclude Include="FilterMeanDlg.h" />
+    <ClInclude Include="FilterMedianDlg.h" />
+    <ClInclude Include="Gamma.h" />
+    <ClInclude Include="Histogram.h" />
+    <ClInclude Include="HistogramDlg.h" />
+    <ClInclude Include="LightControl.h" />
+    <ClInclude Include="LightSettingDlg.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="MyDatabase.h" />
+    <ClInclude Include="PageData.h" />
+    <ClInclude Include="PageFilterParm.h" />
+    <ClInclude Include="PageImageProcess.h" />
+    <ClInclude Include="PageImgCapture.h" />
+    <ClInclude Include="PaneSettingDlg.h" />
+    <ClInclude Include="PenSettingDlg.h" />
+    <ClInclude Include="PlaceTextDlg.h" />
+    <ClInclude Include="PLCCommand.h" />
+    <ClInclude Include="ProjectEditDlg.h" />
+    <ClInclude Include="ProjectNewDlg.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="RightDialogBar.h" />
+    <ClInclude Include="RotateDlg.h" />
+    <ClInclude Include="SaveSettingDlg.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StepSetPath.h" />
+    <ClInclude Include="StepTips.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThresholdDlg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\common\BtnST.cpp" />
+    <ClCompile Include="..\common\EnumSerial.cpp" />
+    <ClCompile Include="..\common\Ini.cpp" />
+    <ClCompile Include="..\common\Markup.cpp" />
+    <ClCompile Include="..\common\mysql\MySql.cpp" />
+    <ClCompile Include="..\common\SerialPort.cpp" />
+    <ClCompile Include="..\common\Stopwatch.cpp" />
+    <ClCompile Include="..\common\Utils.cpp" />
+    <ClCompile Include="..\common\XorCode.cpp" />
+    <ClCompile Include="..\Led\LedButton.cpp" />
+    <ClCompile Include="..\Meter\Meter.cpp" />
+    <ClCompile Include="BottomDialogBar.cpp" />
+    <ClCompile Include="CalibrationSettingDlg.cpp" />
+    <ClCompile Include="CommSettingDlg.cpp" />
+    <ClCompile Include="COXRay.cpp" />
+    <ClCompile Include="COXRayDoc.cpp" />
+    <ClCompile Include="COXRayView.cpp" />
+    <ClCompile Include="FilterEnhanceDlg.cpp" />
+    <ClCompile Include="FilterGaussDlg.cpp" />
+    <ClCompile Include="FilterMeanDlg.cpp" />
+    <ClCompile Include="FilterMedianDlg.cpp" />
+    <ClCompile Include="Gamma.cpp" />
+    <ClCompile Include="Histogram.cpp" />
+    <ClCompile Include="HistogramDlg.cpp" />
+    <ClCompile Include="LightControl.cpp" />
+    <ClCompile Include="LightSettingDlg.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="MyDatabase.cpp" />
+    <ClCompile Include="PageData.cpp" />
+    <ClCompile Include="PageFilterParm.cpp" />
+    <ClCompile Include="PageImageProcess.cpp" />
+    <ClCompile Include="PageImgCapture.cpp" />
+    <ClCompile Include="PaneSettingDlg.cpp" />
+    <ClCompile Include="PenSettingDlg.cpp" />
+    <ClCompile Include="PlaceTextDlg.cpp" />
+    <ClCompile Include="PLCCommand.cpp" />
+    <ClCompile Include="ProjectEditDlg.cpp" />
+    <ClCompile Include="ProjectNewDlg.cpp" />
+    <ClCompile Include="RightDialogBar.cpp" />
+    <ClCompile Include="RotateDlg.cpp" />
+    <ClCompile Include="SaveSettingDlg.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="StepSetPath.cpp" />
+    <ClCompile Include="StepTips.cpp" />
+    <ClCompile Include="ThresholdDlg.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="COXRay.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\Lisence\Lisence.lib" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="COXRay.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
