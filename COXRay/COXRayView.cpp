@@ -1,6 +1,8 @@
 
 // COXRayView.cpp : CCOXRayView 类的实现
 //
+// 2015-06-11 Binggoo 1.修改放大时图像显示，滚动条位置不变。
+//                    2.增加图像标定，检测有缺陷后计算总的缺陷大小。
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -356,25 +358,41 @@ void CCOXRayView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				CSize sizeTotal(nWidth,nHeight);
 				SetScrollSizes(MM_TEXT, sizeTotal);
 
-				SetScrollPos(SB_HORZ,0);
-				SetScrollPos(SB_VERT,0);
+// 				int nHorzMin,nHorzMax,nVertMin,nVertMax;
+// 				GetScrollRange(SB_HORZ,&nHorzMin,&nHorzMax);
+// 				GetScrollRange(SB_VERT,&nVertMin,&nVertMax);
+// 				SetScrollPos(SB_HORZ,(nHorzMax - nHorzMin)/2);
+// 				SetScrollPos(SB_VERT,(nVertMax - nVertMin)/2);
+
+				CPoint pt(0,0);
+				OnPrepareDC(&dc);
+				dc.LPtoDP(&pt);
+
+				cx = pt.x;
+				cy = pt.y;
+
+				m_RectImage.left = 0;
+				m_RectImage.top = 0;
+				m_RectImage.right = nWidth;
+				m_RectImage.bottom = nHeight;
 
 				// 居中显示
 				if (rect.Width() > nWidth)
 				{
-					cx = (rect.Width() -nWidth) / 2;	
+					cx = (rect.Width() -nWidth) / 2;
+					m_RectImage.left = cx;
+					m_RectImage.right += cx;
 				}
 
 				
 				if (rect.Height() > nHeight)
 				{
 					cy = (rect.Height() - nHeight) / 2;
+					m_RectImage.top = cy;
+					m_RectImage.bottom += cy;
 				}
 				
-				m_RectImage.left = cx;
-				m_RectImage.top = cy;
-				m_RectImage.right = nWidth + cx;
-				m_RectImage.bottom = nHeight + cy;
+				
 
 				// 避免屏幕不停刷新
 				if (!m_bGammaPreview && !m_bContinueCapture)
@@ -1274,7 +1292,7 @@ void CCOXRayView::OnBtnStaticCap()
 
 	if (m_ProjectXml.IsWellFormed())
 	{
-		m_ProjectXml.ResetMainPos();
+		m_ProjectXml.ResetPos();
 		if (m_ProjectXml.FindChildElem(_T("Project")))
 		{
 			m_ProjectXml.IntoElem();
@@ -1368,7 +1386,7 @@ void CCOXRayView::OnBtnContCap()
 
 		if (m_ProjectXml.IsWellFormed())
 		{
-			m_ProjectXml.ResetMainPos();
+			m_ProjectXml.ResetPos();
 			if (m_ProjectXml.FindChildElem(_T("Project")))
 			{
 				m_ProjectXml.IntoElem();
@@ -1712,7 +1730,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 		
 		if (m_ProjectXml.IsWellFormed())
 		{
-			m_ProjectXml.ResetMainPos();
+			m_ProjectXml.ResetPos();
 
 			if (m_ProjectXml.FindChildElem(_T("Project")))
 			{
@@ -2583,17 +2601,39 @@ void CCOXRayView::OnBtnDist()
 	m_pHWindow->DispLine(htRow11,htColumn11,htRow12,htColumn12);
 	m_pHWindow->DispLine(htRow21,htColumn21,htRow22,htColumn22);
 	
+	dbDistance /= dbZoomScale;
+
 	//
 	double dbPerPixel = m_Ini.GetDouble(_T("CalibrationSetting"),_T("PerPixel"),0.0);
 	UINT nUnitIndex = m_Ini.GetUInt(_T("CalibrationSetting"),_T("UnitIndex"),0);
+	CString strUnit = Units[nUnitIndex];
+
+	if (!m_bPLCStarted)
+	{
+		m_dwCurrentLocation = m_pRightDialogBar->m_PageImgCapture.m_ComboBoxPosNum.GetCurSel() + 1;
+	}
+
+	CString strPos;
+	strPos.Format(_T("POS%d"),m_dwCurrentLocation);
+	if (m_ProjectXml.IsWellFormed())
+	{
+		m_ProjectXml.ResetPos();
+		if (m_ProjectXml.FindChildElem(_T("Project")))
+		{
+			m_ProjectXml.IntoElem();
+			if (m_ProjectXml.FindChildElem(strPos))
+			{
+				dbPerPixel = _ttof(m_ProjectXml.GetChildAttrib(_T("PerPixel")));
+				strUnit = m_ProjectXml.GetChildAttrib(_T("Unit"));
+			}
+			m_ProjectXml.OutOfElem();
+		}
+	}
+
 	CString strDistance;
 	if (dbPerPixel > 0.0)
 	{
-		if (nUnitIndex > UNIT_COUNT - 1)
-		{
-			nUnitIndex = 0;
-		}
-		strDistance.Format(_T(" %.2f %s"),dbDistance * dbPerPixel,Units[nUnitIndex]);	
+		strDistance.Format(_T(" %.2f %s"),dbDistance * dbPerPixel,strUnit);	
 	}
 	else
 	{
@@ -2880,7 +2920,7 @@ void CCOXRayView::DrawGraphics( PDrawInfo pDraw,double dbZoomScale )
 				strDistance.Format(_T(" %.2f pixel"),dbDistance);
 			}
 			
-			strFont.Format(_T("-Arial-%d-"),int(pDraw->logFont.lfHeight * dbZoomScale));
+			strFont.Format(_T("-Arial-%d-"),int(pDraw->logFont.lfHeight));
 
 			USES_CONVERSION;
 			char *text = W2A(strDistance);
@@ -3010,6 +3050,8 @@ void CCOXRayView::OnSettingCalibration()
 	m_pHWindow->DispLine(htRow1,htColumn1,htRow2,htColumn2);
 	m_pHWindow->DispLine(htRow11,htColumn11,htRow12,htColumn12);
 	m_pHWindow->DispLine(htRow21,htColumn21,htRow22,htColumn22);
+
+	dbDistance /= pDoc->GetZoomFactor();
 
 	CString strDistance,strFont;
 	strDistance.Format(_T(" %.2fpixel"),dbDistance);
@@ -3217,7 +3259,7 @@ void CCOXRayView::OnBtnCheck()
 	int nMinGray = 0,nMaxGray = 0,nOffsetGray = 0;
 	HRegionArray hRegions;
 
-	m_ProjectXml.ResetMainPos();
+	m_ProjectXml.ResetPos();
 
 	CString strData,strPos;
 	strPos.Format(_T("POS%d"),m_dwCurrentLocation);
@@ -3231,6 +3273,18 @@ void CCOXRayView::OnBtnCheck()
 		{
 			strData= m_ProjectXml.GetChildAttrib(_T("Areas"));
 			int nAreaCount = _ttoi(strData);
+
+			// 每个像素的实际距离
+			strData = m_ProjectXml.GetChildAttrib(_T("PerPixel"));
+			double dbPerPixel = _ttof(strData);
+
+			CString strUnit = m_ProjectXml.GetChildAttrib(_T("Unit"));
+
+			if (dbPerPixel > 0.0 - EPSINON && dbPerPixel < 0.0 + EPSINON)
+			{
+				dbPerPixel = 1.0;
+				strUnit = _T("pixel");
+			}
 
 			m_ProjectXml.IntoElem();
 
@@ -3370,6 +3424,13 @@ void CCOXRayView::OnBtnCheck()
 				{
 					m_pHWindow->SetColor("red");
 					m_pHWindow->Display(hRegions);
+
+					CString strText;
+					strText.Format(_T("缺陷总大小=%.0f %s"),htArea.Sum()[0].D() * dbPerPixel * dbPerPixel,strUnit);
+
+					USES_CONVERSION;
+					char *text = W2A(strText);
+					DisplayMessage(m_pHWindow,text,20,12,12,"red",TRUE);
 				}
 
 				
@@ -3868,7 +3929,7 @@ void CCOXRayView::OnProjectNew()
 
 		if (m_bLoadProject)
 		{
-			m_ProjectXml.ResetMainPos();
+			m_ProjectXml.ResetPos();
 			if (m_ProjectXml.FindChildElem(_T("Project")))
 			{
 				m_ProjectXml.IntoElem();
@@ -3917,7 +3978,7 @@ void CCOXRayView::OnProjectLoad()
 
 		if (m_bLoadProject)
 		{
-			m_ProjectXml.ResetMainPos();
+			m_ProjectXml.ResetPos();
 			if (m_ProjectXml.FindChildElem(_T("Project")))
 			{
 				m_ProjectXml.IntoElem();

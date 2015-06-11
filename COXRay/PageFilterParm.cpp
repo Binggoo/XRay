@@ -10,6 +10,8 @@
 #include "COXRayDoc.h"
 #include "COXRayView.h"
 
+#include "CalibrationSettingDlg.h"
+
 
 // CPageFilterParm 对话框
 
@@ -19,6 +21,7 @@ CPageFilterParm::CPageFilterParm(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CPageFilterParm::IDD, pParent)
 	, m_dbEditVolKV(0.0)
 	, m_dbEditCurrentmA(0.00)
+	, m_dbPerPixel(0.00)
 {
 	m_pXml = NULL;
 	m_dwCurrentPos = 1;
@@ -44,6 +47,8 @@ void CPageFilterParm::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_AREAS, m_ListCtrlInpectAreas);
 	DDX_Text(pDX,IDC_EDIT_ERROR,m_nEditErrorValue);
 	DDV_MinMaxUInt(pDX, m_nEditErrorValue, 0, 255);
+	DDX_Control(pDX,IDC_COMBO_UNITS,m_ComboBoxUnits);
+	DDX_Text(pDX,IDC_EDIT_PER_PIXEL,m_dbPerPixel);
 }
 
 
@@ -65,6 +70,7 @@ BEGIN_MESSAGE_MAP(CPageFilterParm, CDialogEx)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_ERROR, &CPageFilterParm::OnDeltaposSpinError)
 	ON_NOTIFY(NM_CLICK, IDC_LIST_AREAS, &CPageFilterParm::OnNMClickListAreas)
 	ON_BN_CLICKED(IDC_BTN_SNAP, &CPageFilterParm::OnBnClickedBtnSnap)
+	ON_BN_CLICKED(IDC_BTN_CALIBRATION, &CPageFilterParm::OnBnClickedBtnCalibration)
 END_MESSAGE_MAP()
 
 
@@ -222,7 +228,7 @@ void CPageFilterParm::UpdateListCtrl()
 
 	if (m_pXml->IsWellFormed())
 	{
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		if (m_pXml->FindChildElem(_T("Project")))
 		{
@@ -264,6 +270,12 @@ void CPageFilterParm::UpdateListCtrl()
 
 				strData = m_pXml->GetChildAttrib(_T("Current"));
 				m_dbEditCurrentmA = _ttof(strData);
+
+				strData = m_pXml->GetChildAttrib(_T("PerPixel"));
+				m_dbPerPixel = _ttof(strData);
+
+				strData = m_pXml->GetChildAttrib(_T("Unit"));
+				m_ComboBoxUnits.SetWindowText(strData);
 
 				m_pXml->IntoElem();
 
@@ -387,7 +399,7 @@ void CPageFilterParm::OnBnClickedBtnDeleteArea()
 
 	if (m_pXml->IsWellFormed())
 	{
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		if (m_pXml->FindChildElem(_T("Project")))
 		{
@@ -498,7 +510,7 @@ void CPageFilterParm::OnBnClickedBtnAddRange()
 
 	if (m_pXml->IsWellFormed())
 	{
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		if (m_pXml->FindChildElem(_T("Project")))
 		{
@@ -537,7 +549,7 @@ void CPageFilterParm::OnBnClickedBtnSetLight()
 
 	if (m_pXml->IsWellFormed())
 	{
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		if (m_pXml->FindChildElem(_T("Project")))
 		{
@@ -605,7 +617,7 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 
 	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0,dbRowTrans = 0.0,dbColumnTrans = 0.0;
 
-	m_pXml->ResetMainPos();
+	m_pXml->ResetPos();
 
 	CString strData,strPos;
 	strPos.Format(_T("POS%d"),m_dwCurrentPos);
@@ -708,13 +720,15 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 						dbLen1 = _ttof(m_pXml->GetChildAttrib(_T("Length1")));
 						dbLen2 = _ttof(m_pXml->GetChildAttrib(_T("Length2")));
 
-						HRegion hRect = HRegion::GenRectangle2(dbRow,dbColumn,dbPhi,dbLen1,dbLen2);
+						HRegion hRectS = HRegion::GenRectangle2(dbRow,dbColumn,dbPhi,dbLen1,dbLen2);
 
-						hRect = hRect.AffineTransRegion(HomMat2D,"false");
+						HRegion hRectD = hRectS.AffineTransRegion(HomMat2D,"false");
 
-						hRect = hRect.ZoomRegion(dbZoomScale,dbZoomScale);
+						hRectD = hRectD.ZoomRegion(dbZoomScale,dbZoomScale);
+// 						hRectS = hRectS.ZoomRegion(dbZoomScale,dbZoomScale);
+// 						pHWindow->Display(hRectS);
 
-						pHWindow->Display(hRect);
+						pHWindow->Display(hRectD);
 
 					}
 				}
@@ -821,7 +835,7 @@ void CPageFilterParm::OnBnClickedBtnAddArea()
 
 	if (m_pXml->IsWellFormed())
 	{
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		if (m_pXml->FindChildElem(_T("Project")))
 		{
@@ -858,7 +872,7 @@ void CPageFilterParm::OnBnClickedBtnAddArea()
 			m_pXml->SetChildAttrib(_T("Length1"),strData);
 
 			strData.Format(_T("%f"),htLen2[0].D() / pDoc->GetZoomFactor());
-			strData.Format(_T("%f"),htLen2[0].D() / pDoc->GetZoomFactor());
+			m_ListCtrlInpectAreas.SetItemText(nCount,7,strData);
 			m_pXml->SetChildAttrib(_T("Length2"),strData);
 
 			m_ListCtrlInpectAreas.SetItemState(nCount,  LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);	
@@ -961,7 +975,7 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 	int nMinGray = 0,nMaxGray = 0,nOffsetGray = 0;
 	HRegionArray hRegions;
 
-	m_pXml->ResetMainPos();
+	m_pXml->ResetPos();
 
 	CString strData,strPos;
 	strPos.Format(_T("POS%d"),m_dwCurrentPos);
@@ -975,6 +989,18 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 		{
 			strData= m_pXml->GetChildAttrib(_T("Areas"));
 			int nAreaCount = _ttoi(strData);
+
+			// 每个像素的实际距离
+			strData = m_pXml->GetChildAttrib(_T("PerPixel"));
+			double dbPerPixel = _ttof(strData);
+
+			CString strUnit = m_pXml->GetChildAttrib(_T("Unit"));
+
+			if (dbPerPixel > 0.0 - EPSINON && dbPerPixel < 0.0 + EPSINON)
+			{
+				dbPerPixel = 1.0;
+				strUnit = _T("pixel");
+			}
 
 			m_pXml->IntoElem();
 
@@ -1115,6 +1141,13 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 				{
 					pHWindow->SetColor("red");
 					pHWindow->Display(hRegions);
+
+					CString strText;
+					strText.Format(_T("缺陷总大小=%.0f %s"),htArea.Sum()[0].D() * dbPerPixel * dbPerPixel,strUnit);
+
+					USES_CONVERSION;
+					char *text = W2A(strText);
+					DisplayMessage(pHWindow,text,20,12,12,"red",TRUE);
 				}
 
 			}
@@ -1190,16 +1223,16 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 		//16 位转换为8位
 		HImage hImageDst = pImage->CopyImage();
 
-// 		if (GetImageBits(hImageDst) == 16)
-// 		{
-// 			hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-// 		}
+		if (GetImageBits(hImageDst) == 16)
+		{
+			hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+		}
 
 		double dbZoomScale = 1 / pDoc->GetZoomFactor();
 
 		HRegion htRegion = m_hRegionLoacte.ZoomRegion(dbZoomScale,dbZoomScale);
 		// 定位
-		HImage hReduceImage = hImageDst.ReduceDomain(htRegion);
+		HImage hReduceImage = pImage->ReduceDomain(htRegion);
 
 		htRegion = hReduceImage.Threshold(wParam,lParam);
 
@@ -1227,7 +1260,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 
 		if (m_pXml->IsWellFormed())
 		{
-			m_pXml->ResetMainPos();
+			m_pXml->ResetPos();
 
 			if (m_pXml->FindChildElem(_T("Project")))
 			{
@@ -1240,7 +1273,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 					m_pXml->OutOfElem();
 
 					strShmFile.Format(_T("%s\\%s_%s.shm"),strFilePath,strProjectName,strPos);
-					strModelFile.Format(_T("%s\\%s_%s.png"),strFilePath,strProjectName,strPos);
+					strModelFile.Format(_T("%s\\%s_%s.bmp"),strFilePath,strProjectName,strPos);
 
 					USES_CONVERSION;
 					char *file = W2A(strShmFile);
@@ -1248,7 +1281,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 					hShapModel.WriteShapeModel(file);
 
 					file = W2A(strModelFile);
-					hImageDst.WriteImage("png",0,image);
+					hImageDst.WriteImage("bmp",0,image);
 
 					if (m_pXml->FindChildElem(strPos))
 					{
@@ -1355,7 +1388,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 
 	if (m_pXml->IsWellFormed())
 	{
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		if (m_pXml->FindChildElem(_T("Project")))
 		{
@@ -1550,7 +1583,7 @@ void CPageFilterParm::OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult)
 
 		double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0,dbRowTrans = 0.0,dbColumnTrans = 0.0;
 
-		m_pXml->ResetMainPos();
+		m_pXml->ResetPos();
 
 		CString strData,strPos;
 		strPos.Format(_T("POS%d"),m_dwCurrentPos);
@@ -1687,4 +1720,155 @@ void CPageFilterParm::OnBnClickedBtnSnap()
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 	::PostMessage(GetParent()->GetParent()->GetSafeHwnd(),WM_COMMAND,IDC_BTN_SNAP,0);
+}
+
+
+void CPageFilterParm::OnBnClickedBtnCalibration()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMainFrame *pFrame = (CMainFrame *)AfxGetMainWnd();
+	if (pFrame == NULL)
+	{
+		return;
+	}
+
+	CCOXRayView *pView = (CCOXRayView *)pFrame->GetActiveView();
+	if (pView == NULL)
+	{
+		return;
+	}
+	CCOXRayDoc *pDoc = pView->GetDocument();
+	if (pDoc == NULL)
+	{
+		return;
+	}
+
+	HImage *pImage = pDoc->GetImage();
+	if (pImage == NULL)
+	{
+		return;
+	}
+
+	HWindow *pHWindow = pView->GetHWindow();
+	if (pHWindow == NULL)
+	{
+		return;
+	}
+
+	double dbZoomScale = pDoc->GetZoomFactor();
+
+	int nType = pView->GetOptionType();
+	pView->SetOptionType(OP_CALIB);
+
+	CString strText = _T("按住鼠标左键开始，点鼠标右键完成。");
+
+	CStatusBar *pStatusBar = pFrame->GetStatusBar();
+	pStatusBar->SetPaneText(0,strText);
+
+	pHWindow->SetDraw("margin");
+	pHWindow->SetLineWidth(1);
+	pHWindow->SetColor("green");
+
+
+	HTuple htRow1,htColumn1,htRow2,htColumn2,htDistance;
+	HTuple htRow11,htColumn11,htRow12,htColumn12,htRow21,htColumn21,htRow22,htColumn22;
+	double dbDistance,dbOffsetColumn,dbOffsetRow;
+
+	try
+	{
+		htRow1 = pHWindow->DrawLine(&htColumn1,&htRow2,&htColumn2);
+	}
+	catch (HException &except)
+	{
+		CString strErrorMsg;
+		strErrorMsg.Format(_T("请先点鼠标左键开始，点鼠标右键完成。"));
+
+		AfxMessageBox(strErrorMsg);
+
+		pView->SetOptionType(nType);
+		return;
+	}
+
+	distance_pp(htRow1,htColumn1,htRow2,htColumn2,&dbDistance);
+
+	dbOffsetColumn = (htRow2[0].D() - htRow1[0].D()) * 10 / dbDistance;
+	dbOffsetRow = (htColumn2[0].D() - htColumn1[0].D()) * 10 / dbDistance;
+
+	htRow11 = htRow1 + dbOffsetRow;
+	htColumn11 = htColumn1 - dbOffsetColumn;
+
+	htRow12 = htRow1 - dbOffsetRow;
+	htColumn12 = htColumn1 + dbOffsetColumn;
+
+	htRow21 = htRow2 + dbOffsetRow;
+	htColumn21 = htColumn2 - dbOffsetColumn;
+
+	htRow22 = htRow2 - dbOffsetRow;
+	htColumn22 = htColumn2 + dbOffsetColumn;
+
+	pHWindow->DispLine(htRow1,htColumn1,htRow2,htColumn2);
+	pHWindow->DispLine(htRow11,htColumn11,htRow12,htColumn12);
+	pHWindow->DispLine(htRow21,htColumn21,htRow22,htColumn22);
+
+	dbDistance /= dbZoomScale;
+
+	CString strDistance,strFont;
+	strDistance.Format(_T(" %.2f pixel"),dbDistance);
+	strFont.Format(_T("-Arial-%d-"),20);
+
+	USES_CONVERSION;
+	char *text = W2A(strDistance);
+	char *font = W2A(strFont);
+
+	pHWindow->SetTposition(htRow2,htColumn2);
+	pHWindow->SetFont(font);
+	pHWindow->WriteString(text);
+
+	CCalibrationSettingDlg dlg;
+	dlg.SetPixel(dbDistance);
+	if (dlg.DoModal() == IDOK)
+	{
+		m_dbPerPixel = dlg.GetPerPixel();
+		UINT nUnitIndex = dlg.GetSelectUnit();
+
+		m_ComboBoxUnits.SetWindowText(Units[nUnitIndex]);
+
+		pDoc->UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+
+		pHWindow->DispLine(htRow1,htColumn1,htRow2,htColumn2);
+		pHWindow->DispLine(htRow11,htColumn11,htRow12,htColumn12);
+		pHWindow->DispLine(htRow21,htColumn21,htRow22,htColumn22);
+
+		strDistance.Format(_T(" %.2f %s"),dbDistance * m_dbPerPixel,Units[nUnitIndex]);
+		text = W2A(strDistance);
+
+		pHWindow->SetTposition(htRow2,htColumn2);
+		pHWindow->WriteString(text);
+
+		CString strPos,strPerPixel;
+		strPos.Format(_T("POS%d"),m_dwCurrentPos);
+		strPerPixel.Format(_T("%.6f"),m_dbPerPixel);
+
+		if (m_pXml->IsWellFormed())
+		{
+			m_pXml->ResetPos();
+			if (m_pXml->FindChildElem(_T("Project")))
+			{
+				m_pXml->IntoElem();
+				if (m_pXml->FindChildElem(strPos))
+				{
+					m_pXml->SetChildAttrib(_T("PerPixel"),strPerPixel);
+					m_pXml->SetChildAttrib(_T("Unit"),Units[nUnitIndex]);
+
+					m_pXml->Save();
+				}
+				m_pXml->OutOfElem();
+			}
+		}
+		
+	}
+
+	pView->SetOptionType(nType);
+	UpdateData(FALSE);
+
 }

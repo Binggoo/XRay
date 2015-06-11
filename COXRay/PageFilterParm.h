@@ -37,6 +37,8 @@ public:
 	double m_dbEditVolKV;
 	double m_dbEditCurrentmA;
 	UINT m_nEditErrorValue;
+	double m_dbPerPixel;
+	CComboBox m_ComboBoxUnits;
 
 	void SetConfig(CMarkup *pXml) {m_pXml = pXml;}
 	void SetCurrentPos(DWORD dwCurrentPos) {m_dwCurrentPos = dwCurrentPos;}
@@ -62,4 +64,5 @@ public:
 	afx_msg void OnDeltaposSpinError(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnSnap();
+	afx_msg void OnBnClickedBtnCalibration();
 };
