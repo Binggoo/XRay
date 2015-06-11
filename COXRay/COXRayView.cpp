@@ -3,6 +3,8 @@
 //
 // 2015-06-11 Binggoo 1.修改放大时图像显示，滚动条位置不变。
 //                    2.增加图像标定，检测有缺陷后计算总的缺陷大小。
+//                    3.修改Gamma校正。
+//                    4.修改模板图像格式为BMP
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -2052,13 +2054,22 @@ afx_msg LRESULT CCOXRayView::OnGammaChangeEnsure(WPARAM wParam, LPARAM lParam)
 		return 1;
 	}
 
+	HImage *pImage = pDoc->GetImage();
+
 	m_bGammaPreview = FALSE;
 
 	double dbGamma = m_pRightDialogBar->m_PageImgProcess.m_dbEditGamma;
 
 	m_Ini.WriteDouble(_T("ImageProcess"),_T("Gamma"),dbGamma);
 
-	pDoc->UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+	if (dbGamma != 1.0)
+	{
+		HImage hGammaImage = pImage->CopyImage();
+
+		hGammaImage = GammaImage(hGammaImage,dbGamma);
+
+		pDoc->SetImage(hGammaImage,FALSE,FALSE);
+	}
 
 	return 0;
 }

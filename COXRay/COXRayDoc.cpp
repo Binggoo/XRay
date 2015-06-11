@@ -866,6 +866,10 @@ void CCOXRayDoc::SetImage( HImage Image,BOOL bUpdateWindow/* = TRUE*/,BOOL bNew 
 
 		*m_pOriginImage = Image.CopyImage();
 	}
+	else
+	{
+		SubmitUndoImage();
+	}
 	
 	*m_pHWorkImage = Image.CopyImage();
 
