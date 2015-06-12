@@ -226,6 +226,9 @@
     <ClInclude Include="..\xis\pane.h">
       <Filter>xis</Filter>
     </ClInclude>
+    <ClInclude Include="InspectLevelDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="COXRay.cpp">
@@ -362,6 +365,9 @@
     </ClCompile>
     <ClCompile Include="SaveSettingDlg.cpp">
       <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="InspectLevelDlg.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

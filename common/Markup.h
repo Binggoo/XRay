@@ -352,10 +352,16 @@ public:
 	bool InsertElem( MCD_CSTR szName, int nValue, int nFlags=0 ) { return x_AddElem(szName,nValue,nFlags|MNF_INSERT); };
 	bool AddChildElem( MCD_CSTR szName, int nValue, int nFlags=0 ) { return x_AddElem(szName,nValue,nFlags|MNF_CHILD); };
 	bool InsertChildElem( MCD_CSTR szName, int nValue, int nFlags=0 ) { return x_AddElem(szName,nValue,nFlags|MNF_INSERT|MNF_CHILD); };
+	bool AddElem( MCD_CSTR szName, double dbValue, int nFlags=0 ) { return x_AddElem(szName,dbValue,nFlags); };
+	bool InsertElem( MCD_CSTR szName, double dbValue, int nFlags=0 ) { return x_AddElem(szName,dbValue,nFlags|MNF_INSERT); };
+	bool AddChildElem( MCD_CSTR szName, double dbValue, int nFlags=0 ) { return x_AddElem(szName,dbValue,nFlags|MNF_CHILD); };
+	bool InsertChildElem( MCD_CSTR szName, double dbValue, int nFlags=0 ) { return x_AddElem(szName,dbValue,nFlags|MNF_INSERT|MNF_CHILD); };
 	bool AddAttrib( MCD_CSTR szAttrib, MCD_CSTR szValue ) { return x_SetAttrib(m_iPos,szAttrib,szValue); };
 	bool AddChildAttrib( MCD_CSTR szAttrib, MCD_CSTR szValue ) { return x_SetAttrib(m_iPosChild,szAttrib,szValue); };
 	bool AddAttrib( MCD_CSTR szAttrib, int nValue ) { return x_SetAttrib(m_iPos,szAttrib,nValue); };
 	bool AddChildAttrib( MCD_CSTR szAttrib, int nValue ) { return x_SetAttrib(m_iPosChild,szAttrib,nValue); };
+	bool AddAttrib( MCD_CSTR szAttrib, double dbValue ) { return x_SetAttrib(m_iPos,szAttrib,dbValue); };
+	bool AddChildAttrib( MCD_CSTR szAttrib, double dbValue) { return x_SetAttrib(m_iPosChild,szAttrib,dbValue); };
 	bool AddSubDoc( MCD_CSTR szSubDoc ) { return x_AddSubDoc(szSubDoc,0); };
 	bool InsertSubDoc( MCD_CSTR szSubDoc ) { return x_AddSubDoc(szSubDoc,MNF_INSERT); };
 	MCD_STR GetSubDoc() { return x_GetSubDoc(m_iPos); };
@@ -373,10 +379,14 @@ public:
 	bool SetChildAttrib( MCD_CSTR szAttrib, MCD_CSTR szValue, int nFlags=0 ) { return x_SetAttrib(m_iPosChild,szAttrib,szValue,nFlags); };
 	bool SetAttrib( MCD_CSTR szAttrib, int nValue, int nFlags=0 ) { return x_SetAttrib(m_iPos,szAttrib,nValue,nFlags); };
 	bool SetChildAttrib( MCD_CSTR szAttrib, int nValue, int nFlags=0 ) { return x_SetAttrib(m_iPosChild,szAttrib,nValue,nFlags); };
+	bool SetAttrib( MCD_CSTR szAttrib, double dbValue, int nFlags=0 ) { return x_SetAttrib(m_iPos,szAttrib,dbValue,nFlags); };
+	bool SetChildAttrib( MCD_CSTR szAttrib, double dbValue, int nFlags=0 ) { return x_SetAttrib(m_iPosChild,szAttrib,dbValue,nFlags); };
 	bool SetData( MCD_CSTR szData, int nFlags=0 ) { return x_SetData(m_iPos,szData,nFlags); };
 	bool SetChildData( MCD_CSTR szData, int nFlags=0 ) { return x_SetData(m_iPosChild,szData,nFlags); };
 	bool SetData( int nValue ) { return x_SetData(m_iPos,nValue); };
 	bool SetChildData( int nValue ) { return x_SetData(m_iPosChild,nValue); };
+	bool SetData( double dbValue ) { return x_SetData(m_iPos,dbValue); };
+	bool SetChildData( double dbValue ) { return x_SetData(m_iPosChild,dbValue); };
 	bool SetElemContent( MCD_CSTR szContent ) { return x_SetElemContent(szContent); };
 
 
@@ -450,10 +460,12 @@ protected:
 	static MCD_STR x_EncodeCDATASection( MCD_PCSZ szData );
 	bool x_AddElem( MCD_PCSZ pName, MCD_PCSZ pValue, int nFlags );
 	bool x_AddElem( MCD_PCSZ pName, int nValue, int nFlags );
+	bool x_AddElem( MCD_PCSZ pName, double dbValue, int nFlags );
 	MCD_STR x_GetSubDoc( int iPos );
 	bool x_AddSubDoc( MCD_PCSZ pSubDoc, int nFlags );
 	bool x_SetAttrib( int iPos, MCD_PCSZ pAttrib, MCD_PCSZ pValue, int nFlags=0 );
 	bool x_SetAttrib( int iPos, MCD_PCSZ pAttrib, int nValue, int nFlags=0 );
+	bool x_SetAttrib( int iPos, MCD_PCSZ pAttrib, double dbValue, int nFlags=0 );
 	bool x_AddNode( int nNodeType, MCD_PCSZ pText, int nNodeFlags );
 	void x_RemoveNode( int iPosParent, int& iPos, int& nNodeType, int& nNodeOffset, int& nNodeLength );
 	static bool x_CreateNode( MCD_STR& strNode, int nNodeType, MCD_PCSZ pText );
@@ -468,6 +480,7 @@ protected:
 	void x_CheckSavedPos();
 	bool x_SetData( int iPos, MCD_PCSZ szData, int nFlags );
 	bool x_SetData( int iPos, int nValue );
+	bool x_SetData( int iPos, double dbValue );
 	int x_RemoveElem( int iPos );
 	MCD_STR x_GetElemContent( int iPos ) const;
 	bool x_SetElemContent( MCD_PCSZ szContent );

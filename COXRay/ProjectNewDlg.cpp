@@ -5,7 +5,7 @@
 #include "COXRay.h"
 #include "ProjectNewDlg.h"
 #include "afxdialogex.h"
-
+#include "InspectLevelDlg.h"
 
 // CProjectNewDlg 对话框
 
@@ -19,11 +19,15 @@ CProjectNewDlg::CProjectNewDlg(CWnd* pParent /*=NULL*/)
 	, m_nEditWidth(0)
 	, m_nEditHeight(0)
 {
-
+	m_pXml = NULL;
 }
 
 CProjectNewDlg::~CProjectNewDlg()
 {
+	if (m_pXml)
+	{
+		delete m_pXml;
+	}
 }
 
 void CProjectNewDlg::DoDataExchange(CDataExchange* pDX)
@@ -35,7 +39,6 @@ void CProjectNewDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_WIDTH, m_nEditWidth);
 	DDX_Text(pDX, IDC_EDIT_HEIGHT, m_nEditHeight);
 	DDX_Control(pDX, IDC_COMBO_CUSTOMER, m_ComboBoxCustomer);
-	DDX_Control(pDX, IDC_COMBO_INSPECT_LEVEL, m_ComboBoxInspectLevel);
 	DDX_Control(pDX, IDC_COMBO_INSPECT_MODE, m_ComboBoxInspectMode);
 	DDX_Control(pDX,IDC_COMBO_INSPECT_POS,m_ComboBoxInspectPos);
 	DDX_Text(pDX,IDC_EDIT_WORKER_NAME,m_strWorkerName);
@@ -47,6 +50,7 @@ BEGIN_MESSAGE_MAP(CProjectNewDlg, CDialogEx)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_WIDTH, &CProjectNewDlg::OnDeltaposSpinWidth)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_HEIGHT, &CProjectNewDlg::OnDeltaposSpinHeight)
 	ON_BN_CLICKED(IDOK, &CProjectNewDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_BTN_INSPECT_LEVEL, &CProjectNewDlg::OnBnClickedBtnInspectLevel)
 END_MESSAGE_MAP()
 
 
@@ -76,10 +80,6 @@ BOOL CProjectNewDlg::OnInitDialog()
 	m_ComboBoxInspectMode.AddString(_T("半自动"));
 	m_ComboBoxInspectMode.AddString(_T("全自动"));
 	m_ComboBoxInspectMode.SetCurSel(1);
-
-	// 添加检测标准
-	m_ComboBoxInspectLevel.AddString(_T("LEVEL 1"));
-	m_ComboBoxInspectLevel.AddString(_T("LEVEL 2"));
 
 	for (int i = 1; i <= MAX_POS; i++)
 	{
@@ -178,8 +178,6 @@ void CProjectNewDlg::OnBnClickedOk()
 
 	m_strProjectFile.Format(_T("%s\\%s.xml"),strProjectDir,m_strEditProjectNumber);
 	
-	CMarkup xml;
-	
 	CTime time = CTime::GetCurrentTime();
 
 	CString strCustomerName;
@@ -192,28 +190,157 @@ void CProjectNewDlg::OnBnClickedOk()
 	m_IniCustomer.WriteString(strCustomerName,strCustomerName,NULL);
 	m_IniCustomer.DeleteKey(strCustomerName,strCustomerName);
 
-	xml.AddElem(_T("COXRay"));
-	xml.AddChildElem(_T("Project"));
-	xml.IntoElem();
-	xml.AddChildElem(_T("ProjectName"),m_strEditProjectNumber);
-	xml.AddChildElem(_T("CustomerName"),strCustomerName);
-	xml.AddChildElem(_T("ProductName"),m_strEditProductName);
-	xml.AddChildElem(_T("ProductLengh"),m_nEditLength);
-	xml.AddChildElem(_T("ProductWidth"),m_nEditWidth);
-	xml.AddChildElem(_T("ProductHeight"),m_nEditHeight);
-	xml.AddChildElem(_T("InspectLevel"),m_ComboBoxInspectLevel.GetCurSel());
-	xml.AddChildElem(_T("InspectMode"),m_ComboBoxInspectMode.GetCurSel());
-	xml.AddChildElem(_T("InspectPos"),strPosCount);
-	xml.AddChildElem(_T("WorkerName"),m_strWorkerName);
+	m_pXml->ResetPos();
+	if (!m_pXml->FindElem(_T("COXRay")))
+	{
+		m_pXml->AddElem(_T("COXRay"));
+	}
+
+	if (!m_pXml->FindChildElem(_T("Project")))
+	{
+		m_pXml->AddElem(_T("Project"));
+	}
+
+	m_pXml->IntoElem();
+
+	// 创建ProjectName节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("ProjectName")))
+	{
+		m_pXml->AddChildElem(_T("ProjectName"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(m_strEditProjectNumber);
+		m_pXml->OutOfElem();
+	}
+
+	// 创建Time节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("Time")))
+	{
+		m_pXml->AddChildElem(_T("Time"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(time.Format(_T("%Y-%m-%d %H:%M:%S")));
+		m_pXml->OutOfElem();
+	}
+
+	// 创建CustomerName节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("CustomerName")))
+	{
+		m_pXml->AddChildElem(_T("CustomerName"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(strCustomerName);
+		m_pXml->OutOfElem();
+	}
+
+	// 创建ProductName节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("ProductName")))
+	{
+		m_pXml->AddChildElem(_T("ProductName"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(m_strEditProductName);
+		m_pXml->OutOfElem();
+	}
+
+	// 创建ProductLengh节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("ProductLengh")))
+	{
+		m_pXml->AddChildElem(_T("ProductLengh"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(m_nEditLength);
+		m_pXml->OutOfElem();
+	}
+
+	// 创建ProductLengh节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("ProductWidth")))
+	{
+		m_pXml->AddChildElem(_T("ProductWidth"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(m_nEditWidth);
+		m_pXml->OutOfElem();
+	}
+
+	// 创建ProductHeight节点
+	m_pXml->ResetChildPos();
+	if (!m_pXml->FindChildElem(_T("ProductHeight")))
+	{
+		m_pXml->AddChildElem(_T("ProductHeight"));
+	}
+
+	{
+		m_pXml->IntoElem();
+		m_pXml->SetData(m_nEditHeight);
+		m_pXml->OutOfElem();
+	}
+
+	m_pXml->FindChildElem(_T("InspectLevel"));
+	
+	m_pXml->AddChildElem(_T("InspectMode"),m_ComboBoxInspectMode.GetCurSel());
+	m_pXml->AddChildElem(_T("InspectPos"),strPosCount);
+	m_pXml->AddChildElem(_T("WorkerName"),m_strWorkerName);
 
 	for (int i = 0; i < nPosCount; i++)
 	{
 		strPosCount.Format(_T("POS%d"),i+1);
 
-		xml.AddChildElem(strPosCount,_T(""));
+		m_pXml->AddChildElem(strPosCount,_T(""));
 	}
 
-	xml.Save(m_strProjectFile);
+	m_pXml->Save(m_strProjectFile);
 
 	CDialogEx::OnOK();
+}
+
+
+void CProjectNewDlg::OnBnClickedBtnInspectLevel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if (m_pXml != NULL)
+	{
+		delete m_pXml;
+	}
+
+	m_pXml = new CMarkup;
+
+
+	m_pXml->AddElem(_T("COXRay"));
+	m_pXml->AddChildElem(_T("Project"));
+
+	m_pXml->IntoElem();
+
+	m_pXml->AddChildElem(_T("ProjectName"),m_strEditProjectNumber);
+	m_pXml->AddChildElem(_T("Time"));
+	m_pXml->AddChildElem(_T("CustomerName"));
+	m_pXml->AddChildElem(_T("ProductName"),m_strEditProductName);
+	m_pXml->AddChildElem(_T("ProductLengh"),m_nEditLength);
+	m_pXml->AddChildElem(_T("ProductWidth"),m_nEditWidth);
+	m_pXml->AddChildElem(_T("ProductHeight"),m_nEditHeight);
+
+	m_pXml->OutOfElem();
+
+	CInspectLevelDlg dlg;
+	dlg.SetConfig(m_pXml);
+
+	dlg.DoModal();
 }

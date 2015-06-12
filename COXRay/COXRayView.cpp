@@ -5,6 +5,9 @@
 //                    2.增加图像标定，检测有缺陷后计算总的缺陷大小。
 //                    3.修改Gamma校正。
 //                    4.修改模板图像格式为BMP
+// 2015-06-12 Binggoo 1.添加检测标准。
+//                    2.添加编辑项目。
+
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -28,6 +31,8 @@
 #include "LightSettingDlg.h"
 #include "SaveSettingDlg.h"
 #include "ProjectNewDlg.h"
+#include "ProjectEditDlg.h"
+#include "InspectLevelDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -122,6 +127,8 @@ BEGIN_MESSAGE_MAP(CCOXRayView, CScrollView)
 // 	ON_COMMAND(ID_FILE_SAVE, &CCOXRayView::OnFileSave)
 // 	ON_COMMAND(ID_FILE_SAVE_AS, &CCOXRayView::OnFileSaveAs)
 // 	ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_AS, &CCOXRayView::OnUpdateFileSaveAs)
+ON_UPDATE_COMMAND_UI(ID_SETTING_INSPECT_LEVEL, &CCOXRayView::OnUpdateSettingInspectLevel)
+ON_COMMAND(ID_SETTING_INSPECT_LEVEL, &CCOXRayView::OnSettingInspectLevel)
 END_MESSAGE_MAP()
 
 // CCOXRayView 构造/析构
@@ -4026,6 +4033,35 @@ void CCOXRayView::OnUpdateProjectEdit(CCmdUI *pCmdUI)
 void CCOXRayView::OnProjectEdit()
 {
 	// TODO: 在此添加命令处理程序代码
+	CProjectEditDlg dlg;
+	dlg.SetConfig(&m_ProjectXml);
+
+	if (dlg.DoModal() == IDOK)
+	{
+		m_ProjectXml.ResetPos();
+		if (m_ProjectXml.FindChildElem(_T("Project")))
+		{
+			m_ProjectXml.IntoElem();
+
+			if (m_ProjectXml.FindChildElem(_T("InspectMode")))
+			{
+				m_ProjectXml.IntoElem();
+
+				m_nInpectMode = _ttoi(m_ProjectXml.GetData());
+
+				m_ProjectXml.OutOfElem();
+			}
+
+			m_ProjectXml.OutOfElem();
+		}
+
+		if (m_pRightDialogBar->m_PageFilterParm.IsWindowVisible())
+		{
+			m_pRightDialogBar->m_PageFilterParm.ShowWindow(SW_HIDE);
+			m_pRightDialogBar->m_PageFilterParm.ShowWindow(SW_SHOW);
+		}
+	}
+
 }
 
 
@@ -4184,4 +4220,21 @@ void CCOXRayView::OnFileSaveAs()
 	}
 
 	pDoc->DoSave(NULL);
+}
+
+
+void CCOXRayView::OnUpdateSettingInspectLevel(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_bLoadProject);
+}
+
+
+void CCOXRayView::OnSettingInspectLevel()
+{
+	// TODO: 在此添加命令处理程序代码
+	CInspectLevelDlg dlg;
+	dlg.SetConfig(&m_ProjectXml);
+
+	dlg.DoModal();
 }

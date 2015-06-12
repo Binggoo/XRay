@@ -187,6 +187,8 @@ public:
 	afx_msg void OnFileSave();
 	afx_msg void OnFileSaveAs();
 	afx_msg void OnUpdateFileSaveAs(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateSettingInspectLevel(CCmdUI *pCmdUI);
+	afx_msg void OnSettingInspectLevel();
 };
 
 #ifndef _DEBUG  // COXRayView.cpp 中的调试版本

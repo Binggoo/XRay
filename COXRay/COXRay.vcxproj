@@ -147,6 +147,7 @@
     <ClInclude Include="Gamma.h" />
     <ClInclude Include="Histogram.h" />
     <ClInclude Include="HistogramDlg.h" />
+    <ClInclude Include="InspectLevelDlg.h" />
     <ClInclude Include="LightControl.h" />
     <ClInclude Include="LightSettingDlg.h" />
     <ClInclude Include="MainFrm.h" />
@@ -196,6 +197,7 @@
     <ClCompile Include="Gamma.cpp" />
     <ClCompile Include="Histogram.cpp" />
     <ClCompile Include="HistogramDlg.cpp" />
+    <ClCompile Include="InspectLevelDlg.cpp" />
     <ClCompile Include="LightControl.cpp" />
     <ClCompile Include="LightSettingDlg.cpp" />
     <ClCompile Include="MainFrm.cpp" />

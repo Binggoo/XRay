@@ -4302,6 +4302,14 @@ bool CMarkup::x_SetAttrib( int iPos, MCD_PCSZ pAttrib, int nValue, int nFlags /*
 	return x_SetAttrib( iPos, pAttrib, szVal, nFlags );
 }
 
+bool CMarkup::x_SetAttrib( int iPos, MCD_PCSZ pAttrib, double dbValue, int nFlags/*=0 */ )
+{
+	// Convert double to string
+	MCD_CHAR szVal[25];
+	MCD_SPRINTF( MCD_SSZ(szVal), MCD_T("%f"), dbValue );
+	return x_SetAttrib( iPos, pAttrib, szVal, nFlags );
+}
+
 bool CMarkup::x_SetAttrib( int iPos, MCD_PCSZ pAttrib, MCD_PCSZ pValue, int nFlags /*=0*/ )
 {
 	if ( m_nDocFlags & MDF_READFILE )
@@ -4453,6 +4461,14 @@ bool CMarkup::x_SetData( int iPos, int nValue )
 	// Convert integer to string
 	MCD_CHAR szVal[25];
 	MCD_SPRINTF( MCD_SSZ(szVal), MCD_T("%d"), nValue );
+	return x_SetData( iPos, szVal, 0 );
+}
+
+bool CMarkup::x_SetData( int iPos, double dbValue )
+{
+	// Convert double to string
+	MCD_CHAR szVal[25];
+	MCD_SPRINTF( MCD_SSZ(szVal), MCD_T("%f"), dbValue );
 	return x_SetData( iPos, szVal, 0 );
 }
 
@@ -4872,6 +4888,14 @@ bool CMarkup::x_AddElem( MCD_PCSZ pName, int nValue, int nFlags )
 	// Convert integer to string
 	MCD_CHAR szVal[25];
 	MCD_SPRINTF( MCD_SSZ(szVal), MCD_T("%d"), nValue );
+	return x_AddElem( pName, szVal, nFlags );
+}
+
+bool CMarkup::x_AddElem( MCD_PCSZ pName, double dbValue, int nFlags )
+{
+	// Convert double to string
+	MCD_CHAR szVal[25];
+	MCD_SPRINTF( MCD_SSZ(szVal), MCD_T("%f"), dbValue );
 	return x_AddElem( pName, szVal, nFlags );
 }
 

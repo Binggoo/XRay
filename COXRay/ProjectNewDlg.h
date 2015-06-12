@@ -21,17 +21,18 @@ protected:
 private:
 	CString m_strEditProjectNumber;
 	CString m_strEditProductName;
-	UINT m_nEditLength;
-	UINT m_nEditWidth;
-	UINT m_nEditHeight;
+	int m_nEditLength;
+	int m_nEditWidth;
+	int m_nEditHeight;
 	CComboBox m_ComboBoxCustomer;
-	CComboBox m_ComboBoxInspectLevel;
 	CComboBox m_ComboBoxInspectMode;
 	CComboBox m_ComboBoxInspectPos;
 	CIni m_IniCustomer;
 
 	CString m_strProjectFile;
 	CString m_strWorkerName;
+
+	CMarkup *m_pXml;
 
 public:
 	virtual BOOL OnInitDialog();
@@ -42,4 +43,5 @@ public:
 	void SetWorkerName(CString strWorkName) {m_strWorkerName = strWorkName;}
 
 	CString GetProjectFile() {return m_strProjectFile;}
+	afx_msg void OnBnClickedBtnInspectLevel();
 };

@@ -23,15 +23,25 @@ protected:
 private:
 	CString m_strEditProjectNumber;
 	CString m_strEditProductName;
-	UINT m_nEditLength;
-	UINT m_nEditWidth;
-	UINT m_nEditHeight;
+	int m_nEditLength;
+	int m_nEditWidth;
+	int m_nEditHeight;
 	CComboBox m_ComboBoxCustomer;
-	CComboBox m_ComboBoxInspectLevel;
+	CComboBox m_ComboBoxWorker;
 	CComboBox m_ComboBoxInspectMode;
+	CComboBox m_ComboBoxPos;
 	CListCtrl m_ListCtrl;
-	CIni *m_pIni;
+
+	int m_nTotalPos;
+	
+	CMarkup *m_pXml;
+	CIni m_IniCustomer;
+
+	void IntialListCtrl();
+	void UpdateListCtrl();
 public:
 	virtual BOOL OnInitDialog();
-	void SetConfig(CIni *pIni) {m_pIni = pIni;}
+	void SetConfig(CMarkup *pXml) {m_pXml = pXml;}
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedBtnInspectLevel();
 };
