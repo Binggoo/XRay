@@ -7,6 +7,7 @@
 //                    4.修改模板图像格式为BMP
 // 2015-06-12 Binggoo 1.添加检测标准。
 //                    2.添加编辑项目。
+// 2015-06-14 Binggoo 1.添加数据库查询。
 
 
 #include "stdafx.h"
@@ -33,6 +34,7 @@
 #include "ProjectNewDlg.h"
 #include "ProjectEditDlg.h"
 #include "InspectLevelDlg.h"
+#include "DatabaseDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -129,6 +131,8 @@ BEGIN_MESSAGE_MAP(CCOXRayView, CScrollView)
 // 	ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_AS, &CCOXRayView::OnUpdateFileSaveAs)
 ON_UPDATE_COMMAND_UI(ID_SETTING_INSPECT_LEVEL, &CCOXRayView::OnUpdateSettingInspectLevel)
 ON_COMMAND(ID_SETTING_INSPECT_LEVEL, &CCOXRayView::OnSettingInspectLevel)
+ON_UPDATE_COMMAND_UI(ID_FILE_DATABASE, &CCOXRayView::OnUpdateFileDatabase)
+ON_COMMAND(ID_FILE_DATABASE, &CCOXRayView::OnFileDatabase)
 END_MESSAGE_MAP()
 
 // CCOXRayView 构造/析构
@@ -4235,6 +4239,23 @@ void CCOXRayView::OnSettingInspectLevel()
 	// TODO: 在此添加命令处理程序代码
 	CInspectLevelDlg dlg;
 	dlg.SetConfig(&m_ProjectXml);
+
+	dlg.DoModal();
+}
+
+
+void CCOXRayView::OnUpdateFileDatabase(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_bDatabaseConnected);
+}
+
+
+void CCOXRayView::OnFileDatabase()
+{
+	// TODO: 在此添加命令处理程序代码
+	CDatabaseDlg dlg;
+	dlg.SetDatabase(&m_MyDatabase);
 
 	dlg.DoModal();
 }

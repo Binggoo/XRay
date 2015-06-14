@@ -229,6 +229,9 @@
     <ClInclude Include="InspectLevelDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DatabaseDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="COXRay.cpp">
@@ -367,6 +370,9 @@
       <Filter>dlg</Filter>
     </ClCompile>
     <ClCompile Include="InspectLevelDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DatabaseDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

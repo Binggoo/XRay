@@ -62,7 +62,7 @@
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
-      <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib;../xis;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib/x86sse2-win32;../lib/lib;../xis;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -92,7 +92,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>halconcpp.lib;opencv_core249.lib;opencv_highgui249.lib;libmysql.lib;ImageProcessd.lib;pane.lib</AdditionalDependencies>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
-      <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib;../xis</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib/x86sse2-win32;../lib/lib;../xis;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libcpmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <Midl>
@@ -140,6 +140,7 @@
     <ClInclude Include="COXRay.h" />
     <ClInclude Include="COXRayDoc.h" />
     <ClInclude Include="COXRayView.h" />
+    <ClInclude Include="DatabaseDlg.h" />
     <ClInclude Include="FilterEnhanceDlg.h" />
     <ClInclude Include="FilterGaussDlg.h" />
     <ClInclude Include="FilterMeanDlg.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="COXRay.cpp" />
     <ClCompile Include="COXRayDoc.cpp" />
     <ClCompile Include="COXRayView.cpp" />
+    <ClCompile Include="DatabaseDlg.cpp" />
     <ClCompile Include="FilterEnhanceDlg.cpp" />
     <ClCompile Include="FilterGaussDlg.cpp" />
     <ClCompile Include="FilterMeanDlg.cpp" />
