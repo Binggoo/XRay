@@ -145,6 +145,7 @@
     <ClInclude Include="FilterGaussDlg.h" />
     <ClInclude Include="FilterMeanDlg.h" />
     <ClInclude Include="FilterMedianDlg.h" />
+    <ClInclude Include="FullScreenViewDlg.h" />
     <ClInclude Include="Gamma.h" />
     <ClInclude Include="Histogram.h" />
     <ClInclude Include="HistogramDlg.h" />
@@ -196,6 +197,7 @@
     <ClCompile Include="FilterGaussDlg.cpp" />
     <ClCompile Include="FilterMeanDlg.cpp" />
     <ClCompile Include="FilterMedianDlg.cpp" />
+    <ClCompile Include="FullScreenViewDlg.cpp" />
     <ClCompile Include="Gamma.cpp" />
     <ClCompile Include="Histogram.cpp" />
     <ClCompile Include="HistogramDlg.cpp" />

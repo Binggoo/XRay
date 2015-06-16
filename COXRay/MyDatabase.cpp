@@ -132,7 +132,7 @@ BOOL CMyDatabase::UpdateData( int id,PIMG_INFO imgInfo )
 	CString strDML;
 	imgInfo->strProcessPath.Replace(_T('\\'),_T('/'));
 	strDML.Format(_T("UPDATE %s SET process_path='%s',result='%s',error_msg='%s' WHERE id='%d';"),CString(table_name)
-		,imgInfo->strProcessPath,imgInfo->bResult ? _T("OK") : _T("NG"),imgInfo->strErrorMsg);
+		,imgInfo->strProcessPath,imgInfo->bResult ? _T("OK") : _T("NG"),imgInfo->strErrorMsg,imgInfo->id);
 
 	USES_CONVERSION;
 	char *dml = W2A(strDML);
@@ -142,6 +142,24 @@ BOOL CMyDatabase::UpdateData( int id,PIMG_INFO imgInfo )
 	if (!bRet)
 	{
 		AfxMessageBox(_T("更新数据失败！"));
+	}
+
+	return bRet;
+}
+
+BOOL CMyDatabase::DeleteRecord( int id )
+{
+	CString strDML;
+	strDML.Format(_T("DELETE FROM %s WHERE id='%d';"),CString(table_name),id);
+
+	USES_CONVERSION;
+	char *dml = W2A(strDML);
+
+	BOOL bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("删除数据失败！"));
 	}
 
 	return bRet;

@@ -117,6 +117,9 @@ public:
 	static DWORD WINAPI LightWatchDogThreadProc(LPVOID lpParm);
 	void LightWatchDog();
 
+	// 判断缺陷等级
+	int AdjustDefectLevel(CMarkup *pXml,HTuple htAreas,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel);
+
 // 生成的消息映射函数
 protected:
 	DECLARE_MESSAGE_MAP()

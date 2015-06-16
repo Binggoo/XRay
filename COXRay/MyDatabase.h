@@ -40,6 +40,26 @@ static const char *table_fields[] = {
 	"error_msg"
 };
 
+static const int fileds_width[] = {
+	60,
+	100,
+	100,
+	100,
+	100,
+	100,
+	100,
+	60,
+	60,
+	60,
+	130,
+	60,
+	60,
+	200,
+	200,
+	60,
+	200
+};
+
 typedef enum _ENUM_TABLE_COL
 {
 	COL_ID = 0,
@@ -72,5 +92,7 @@ public:
 
 	int InsertData(PIMG_INFO imgInfo);
 	BOOL UpdateData(int id,PIMG_INFO imgInfo);
+
+	BOOL DeleteRecord(int id);
 };
 

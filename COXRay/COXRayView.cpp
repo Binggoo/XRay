@@ -8,6 +8,11 @@
 // 2015-06-12 Binggoo 1.添加检测标准。
 //                    2.添加编辑项目。
 // 2015-06-14 Binggoo 1.添加数据库查询。
+// 2015-06-15 Binggoo 1.完善数据库查询。
+// 2015-06-16 Binggoo 1.在数据库查询中增加删除和清空查询数据库的右键菜单。
+//                    2.把缺陷等级评定加入检测过程中。
+//                    3.解决没有打开图像时Gamma校正报错的问题。
+//                    4.解决采集图像后自动完成Gamma校正后不刷新图像的问题。
 
 
 #include "stdafx.h"
@@ -1721,7 +1726,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 	if (dbGamma != 1.0)
 	{
 		HImage hGammaImage = GammaImage(Image,dbGamma);
-		pDoc->SetImage(hGammaImage,FALSE,FALSE);
+		pDoc->SetImage(hGammaImage,TRUE,FALSE);
 	}
 
 	m_Stopwatch.Stop();
@@ -2031,7 +2036,7 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 	if (dbGamma != 1.0)
 	{
 		HImage hGammaImage = GammaImage(Image,dbGamma);
-		pDoc->SetImage(hGammaImage,FALSE,FALSE);
+		pDoc->SetImage(hGammaImage,TRUE,FALSE);
 	}
 
 	return 0;
@@ -2066,6 +2071,11 @@ afx_msg LRESULT CCOXRayView::OnGammaChangeEnsure(WPARAM wParam, LPARAM lParam)
 	}
 
 	HImage *pImage = pDoc->GetImage();
+
+	if (pImage == NULL)
+	{
+		return 1;
+	}
 
 	m_bGammaPreview = FALSE;
 
@@ -3444,15 +3454,48 @@ void CCOXRayView::OnBtnCheck()
 				}
 				else
 				{
-					m_pHWindow->SetColor("red");
-					m_pHWindow->Display(hRegions);
+					// 判断缺陷等级
+					HRegion hUnionRegion = hRegions.Union1();
+
+					int nInspectLevel = 1,nActualLevel = 1;
+
+					nActualLevel = AdjustDefectLevel(&m_ProjectXml,htArea,hUnionRegion,dbZoomScale,dbPerPixel,&nInspectLevel);
 
 					CString strText;
-					strText.Format(_T("缺陷总大小=%.0f %s"),htArea.Sum()[0].D() * dbPerPixel * dbPerPixel,strUnit);
+					BOOL bPass = FALSE;
+					if (nActualLevel < nInspectLevel)
+					{
+						// PASS
+						strText.Format(_T("PASS - Level%d"),nActualLevel);
+						bPass = TRUE;
+					}
+					else if (nActualLevel > MAX_LEVEL)
+					{
+						strText.Format(_T("FAIL - Out of Level%d"),nActualLevel);	
+					}
+					else
+					{
+						strText.Format(_T("FAIL - Level%d"),nActualLevel);
+					}
 
 					USES_CONVERSION;
 					char *text = W2A(strText);
-					DisplayMessage(m_pHWindow,text,20,12,12,"red",TRUE);
+
+					if (bPass)
+					{
+						m_pHWindow->SetColor("green");
+						m_pHWindow->Display(hRegions);
+
+						DisplayMessage(m_pHWindow,text,20,12,12,"green",TRUE);
+					}
+					else
+					{
+						m_pHWindow->SetColor("red");
+						m_pHWindow->Display(hRegions);
+
+						DisplayMessage(m_pHWindow,text,20,12,12,"red",TRUE);
+					}
+					
 				}
 
 				
@@ -4258,4 +4301,105 @@ void CCOXRayView::OnFileDatabase()
 	dlg.SetDatabase(&m_MyDatabase);
 
 	dlg.DoModal();
+}
+
+int CCOXRayView::AdjustDefectLevel( CMarkup *pXml,HTuple htAreas,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel)
+{
+	int level = 1;
+
+	// 获取最大外接矩形
+	HRectangle1 rect1 = hRegion.SmallestRectangle1();
+
+	if (pXml->IsWellFormed())
+	{
+		pXml->ResetPos();
+		if (pXml->FindChildElem(_T("Project")))
+		{
+			pXml->IntoElem();
+			pXml->ResetChildPos();
+			if (pXml->FindChildElem(_T("InspectLevel")))
+			{
+				// 实际像素
+				int width = _ttoi(pXml->GetChildAttrib(_T("Width"))) * dbScale / dbPerPixel;
+				int height = _ttoi(pXml->GetChildAttrib(_T("Height"))) * dbScale / dbPerPixel;
+				*plevel = _ttoi(pXml->GetChildAttrib(_T("Level")));
+
+				pXml->IntoElem();
+
+				CString strLevel;
+				double dbSingle[MAX_LEVEL] = {0.0};
+				int nPercent[MAX_LEVEL] = {0};
+				for (int i = 0; i < MAX_LEVEL;i++)
+				{
+					strLevel.Format(_T("Level%d"),i+1);
+
+					pXml->ResetChildPos();
+					if (pXml->FindChildElem(strLevel))
+					{
+						// 实际像素
+						dbSingle[i] = _ttof(pXml->GetChildAttrib(_T("Single"))) * dbScale * dbScale / (dbPerPixel * dbPerPixel);
+						nPercent[i] = _ttoi(pXml->GetChildAttrib(_T("Percent")));
+					}
+				}
+
+				// 先判断单个缺陷
+				for (int count = 0; count < htAreas.Num();count++)
+				{
+					double area = htAreas[count].D();
+
+					for (int i = level; i < MAX_LEVEL;i++)
+					{
+						if (area > dbSingle[i])
+						{
+							level = i + 1;
+						}
+					}
+				}
+
+				if (level < MAX_LEVEL)
+				{
+					// 计算总缺陷所占千分比
+					// 先分成若干个小区域
+					int cols = (rect1.Width() + width - 1) / width;
+					int rows = (rect1.Height() + height - 1) / height;
+
+					for (int col = 0; col < cols;col++)
+					{
+						double dbRow1,dbRow2,dbCol1,dbCol2;
+						dbCol1 = rect1.UpperLeft().X() + width * col;
+						dbCol2 = dbCol1 + width;
+						for (int row = 0;row < rows;row++)
+						{
+							dbRow1 = rect1.UpperLeft().Y() + height * row;
+							dbRow2 = dbRow1 + height;
+							HRegion region = HRegion::GenRectangle1(dbRow1,dbCol1,dbRow2,dbCol2);
+
+							// 取交集
+							HRegion intersection = hRegion.Intersection(region);
+
+							// 计算交集的面积
+							HTuple htArea = intersection.Area();
+
+							// 计算所占千分比
+							int percent = htArea[0].D() * 1000 / (width * height);
+
+							// 满足哪个等级
+							for (int i = level; i < MAX_LEVEL;i++)
+							{
+								if (percent > nPercent[i])
+								{
+									level = i + 1;
+								}
+							}
+						}
+					}
+				}
+
+				pXml->OutOfElem();
+			}
+			pXml->OutOfElem();
+		}
+	}
+
+	return level;
 }

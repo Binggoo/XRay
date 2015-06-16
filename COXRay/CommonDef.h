@@ -13,6 +13,8 @@ static const TCHAR* Units[] = {_T("mm"),_T("cm"),_T("m"),_T("inch")};
 
 #define EPSINON  0.000001
 
+#define MAX_LEVEL 8
+
 typedef enum _ENUM_MASK_TYPE
 {
 	MaskType_Circle,

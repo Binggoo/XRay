@@ -79,6 +79,10 @@ BOOL MySql::Connect(char * host,char * name,char *pwd,char * db,unsigned port)
 BOOL MySql::ExecuteNoQuery(char ** sqlArray,int count)
 {
 	BOOL uRet=TRUE;
+
+	// 刷新
+	mysql_reload(&m_myData);
+
 	//撤消自动提交模式
      mysql_autocommit(&m_myData, 0); 
 	 for(int i=0;i<count;i++)
@@ -107,6 +111,9 @@ unsigned MySql::ExecuteQuery(char * sql)
 	MYSQL_FIELD *pField;
     //释放前一次的结果集
 	FreeResult();
+
+	// 刷新
+	mysql_reload(&m_myData);
 	//查询
     mysql_query(&m_myData,sql);
     //存储结果集
@@ -176,6 +183,7 @@ void MySql::FreeResult()
 BOOL MySql::ExecutePrepare(char * sql)
 {
 	BOOL bRet=TRUE;
+
 	do
 	{
 		//初始化句柄

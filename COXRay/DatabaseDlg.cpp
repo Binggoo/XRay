@@ -5,7 +5,7 @@
 #include "COXRay.h"
 #include "DatabaseDlg.h"
 #include "afxdialogex.h"
-
+#include "FullScreenViewDlg.h"
 
 // CDatabaseDlg 对话框
 
@@ -39,6 +39,12 @@ BEGIN_MESSAGE_MAP(CDatabaseDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_DEL, &CDatabaseDlg::OnBnClickedBtnDel)
 	ON_BN_CLICKED(IDC_BTN_QUERY, &CDatabaseDlg::OnBnClickedBtnQuery)
 	ON_NOTIFY(NM_CLICK, IDC_LIST_QUERY_RESULT, &CDatabaseDlg::OnNMClickListQueryResult)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_QUERY_RESULT, &CDatabaseDlg::OnNMDblclkListQueryResult)
+	ON_BN_CLICKED(IDC_BTN_VIEW, &CDatabaseDlg::OnBnClickedBtnView)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_QUERY_RESULT, &CDatabaseDlg::OnLvnKeydownListQueryResult)
+	ON_NOTIFY(NM_RCLICK, IDC_LIST_QUERY_RESULT, &CDatabaseDlg::OnNMRClickListQueryResult)
+	ON_COMMAND(ID_DATABASE_DEL, &CDatabaseDlg::OnDatabaseDel)
+	ON_COMMAND(ID_DATABASE_CLEAR, &CDatabaseDlg::OnDatabaseClear)
 END_MESSAGE_MAP()
 
 
@@ -52,10 +58,11 @@ BOOL CDatabaseDlg::OnInitDialog()
 	// TODO:  在此添加额外的初始化
 	ASSERT(m_pMyDatabase);
 
-	m_ThumbnailPic.ModifyStyle(0,SS_BITMAP);
+	m_DataTimeCtrlStart.SetFormat(_T("yyyy-MM-dd HH:mm"));
+	m_DataTimeCtrlEnd.SetFormat(_T("yyyy-MM-dd HH:mm"));
 
-	m_DataTimeCtrlStart.SetFormat(_T("yyyy-MM-dd HH:mm:ss"));
-	m_DataTimeCtrlEnd.SetFormat(_T("yyyy-MM-dd HH:mm:ss"));
+	CTime time(0);
+	m_DataTimeCtrlStart.SetTime(&time);
 
 	m_ComboBoxUnion.AddString(_T("AND"));
 	m_ComboBoxUnion.AddString(_T("OR"));
@@ -87,22 +94,12 @@ void CDatabaseDlg::InitialListCtrl()
 	m_ListCtrlQueryCondition.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
 	// 查询结
-	int nItem = 0;
-	m_ListCtrlQueryResult.InsertColumn(nItem,CString(table_fields[nItem]),LVCFMT_LEFT,40);
-	nItem++;
-
-	for (;nItem < TABLE_FIELDS_COUNT - 2;nItem++)
+	for (int nItem = 0;nItem < TABLE_FIELDS_COUNT;nItem++)
 	{
-		m_ListCtrlQueryResult.InsertColumn(nItem,CString(table_fields[nItem]),LVCFMT_LEFT,100);
+		m_ListCtrlQueryResult.InsertColumn(nItem,CString(table_fields[nItem]),LVCFMT_LEFT,fileds_width[nItem]);
 	}
 
-	m_ListCtrlQueryResult.InsertColumn(nItem,CString(table_fields[nItem]),LVCFMT_LEFT,60);
-	nItem++;
-
-	m_ListCtrlQueryResult.InsertColumn(nItem,CString(table_fields[nItem]),LVCFMT_LEFT,150);
-	nItem++;
-
-	m_ListCtrlQueryResult.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	m_ListCtrlQueryResult.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_INFOTIP);
 }
 
 
@@ -121,7 +118,7 @@ void CDatabaseDlg::OnBnClickedBtnAdd()
 
 	GetDlgItemText(IDC_EDIT_CONTENT,strContent);
 
-	int nCount = m_ListCtrlQueryResult.GetItemCount();
+	int nCount = m_ListCtrlQueryCondition.GetItemCount();
 
 	m_ListCtrlQueryCondition.InsertItem(nCount,strOperator);
 	m_ListCtrlQueryCondition.SetItemText(nCount,1,strField);
@@ -259,4 +256,178 @@ void CDatabaseDlg::OnNMClickListQueryResult(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 
 	*pResult = 0;
+}
+
+
+BOOL CDatabaseDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 在此添加专用代码和/或调用基类
+
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+void CDatabaseDlg::OnNMDblclkListQueryResult(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	int nItem = pNMItemActivate->iItem;
+
+	if (nItem != -1)
+	{
+		CString strPath = m_ListCtrlQueryResult.GetItemText(nItem,COL_ORIGIN);
+
+		CFullScreenViewDlg dlg;
+		dlg.SetFilePath(strPath);
+
+		dlg.DoModal();
+	}
+
+	*pResult = 0;
+}
+
+
+void CDatabaseDlg::OnBnClickedBtnView()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	POSITION pos = m_ListCtrlQueryResult.GetFirstSelectedItemPosition();
+
+	if (pos == NULL)
+	{
+		return;
+	}
+
+	int nItem = m_ListCtrlQueryResult.GetNextSelectedItem(pos);
+
+	CString strPath = m_ListCtrlQueryResult.GetItemText(nItem,COL_ORIGIN);
+
+	AfxGetApp()->OpenDocumentFile(strPath);
+}
+
+
+void CDatabaseDlg::OnLvnKeydownListQueryResult(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	POSITION pos = m_ListCtrlQueryResult.GetFirstSelectedItemPosition();
+	
+	int nItem = m_ListCtrlQueryResult.GetNextSelectedItem(pos);
+
+	if (pLVKeyDow->wVKey == VK_UP || pLVKeyDow->wVKey == VK_DOWN )
+	{
+		if (pLVKeyDow->wVKey == VK_UP)
+		{
+			if (nItem > 0)
+			{
+				nItem--;
+			}
+		}
+		else
+		{
+			
+			if (nItem < m_ListCtrlQueryResult.GetItemCount() - 1)
+			{
+				nItem++;
+			}
+		}
+
+		if (nItem < 0 || nItem >= m_ListCtrlQueryResult.GetItemCount())
+		{
+			*pResult = 0;
+			return;
+		}
+
+		CRect rect;
+		m_ThumbnailPic.GetClientRect(&rect);
+
+		CString strPath = m_ListCtrlQueryResult.GetItemText(nItem,COL_ORIGIN);
+
+		Bitmap img(strPath);
+
+		Bitmap *pThumbNail = (Bitmap *)img.GetThumbnailImage(rect.Width(),rect.Height());
+
+		HBITMAP		hBmp = NULL;
+		pThumbNail->GetHBITMAP(NULL,&hBmp);
+
+		m_ThumbnailPic.SetBitmap(hBmp);
+
+		delete pThumbNail;
+	}
+
+	*pResult = 0;
+}
+
+
+void CDatabaseDlg::OnNMRClickListQueryResult(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	if (pNMItemActivate->iItem != -1)
+	{
+		DWORD dwPos = GetMessagePos();
+		CPoint point(LOWORD(dwPos),HIWORD(dwPos));
+
+		CMenu menu;
+
+		menu.LoadMenu(IDR_MENU_DATABASE);
+
+		CMenu *popue = menu.GetSubMenu(0);
+
+		popue->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x,point.y,this);
+	}
+	*pResult = 0;
+}
+
+
+void CDatabaseDlg::OnDatabaseDel()
+{
+	// TODO: 在此添加命令处理程序代码
+	POSITION pos = m_ListCtrlQueryResult.GetFirstSelectedItemPosition();
+
+	if (pos == NULL)
+	{
+		return;
+	}
+
+	int nItem = m_ListCtrlQueryResult.GetNextSelectedItem(pos);
+
+	CString strID = m_ListCtrlQueryResult.GetItemText(nItem,0);
+
+	if (IDYES == AfxMessageBox(_T("即将从数据库中删除此行记录，是否继续？"),MB_YESNO | MB_DEFBUTTON2))
+	{
+		int id = _ttoi(strID);
+
+		if (m_pMyDatabase->DeleteRecord(id))
+		{
+			m_ListCtrlQueryResult.DeleteItem(nItem);
+		}
+	}
+}
+
+
+void CDatabaseDlg::OnDatabaseClear()
+{
+	// TODO: 在此添加命令处理程序代码
+	int nCount = m_ListCtrlQueryResult.GetItemCount();
+
+	if (nCount == 0)
+	{
+		return;
+	}
+
+	if (IDYES == AfxMessageBox(_T("即将从数据库中删除查询到的所有记录，是否继续？"),MB_YESNO | MB_DEFBUTTON2))
+	{
+		for (int nItem = 0; nItem < nCount;nItem++)
+		{
+			CString strID = m_ListCtrlQueryResult.GetItemText(nItem,0);
+			int id = _ttoi(strID);
+
+			if (m_pMyDatabase->DeleteRecord(id))
+			{
+				m_ListCtrlQueryResult.DeleteItem(nItem);
+				nItem--;
+				nCount--;
+			}
+		}
+	}
 }

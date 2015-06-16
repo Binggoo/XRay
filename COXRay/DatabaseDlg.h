@@ -29,7 +29,7 @@ private:
 	CListCtrl m_ListCtrlQueryResult;
 	CMyDatabase *m_pMyDatabase;
 
-	CBitmap m_Bitmap;
+	CStatic m_ThumbnailPic;
 
 	void InitialListCtrl();
 
@@ -40,5 +40,12 @@ public:
 	afx_msg void OnBnClickedBtnDel();
 	afx_msg void OnBnClickedBtnQuery();
 	afx_msg void OnNMClickListQueryResult(NMHDR *pNMHDR, LRESULT *pResult);
-	CStatic m_ThumbnailPic;
+	
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnNMDblclkListQueryResult(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBtnView();
+	afx_msg void OnLvnKeydownListQueryResult(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMRClickListQueryResult(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDatabaseDel();
+	afx_msg void OnDatabaseClear();
 };
