@@ -13,6 +13,8 @@
 //                    2.把缺陷等级评定加入检测过程中。
 //                    3.解决没有打开图像时Gamma校正报错的问题。
 //                    4.解决采集图像后自动完成Gamma校正后不刷新图像的问题。
+// 2015-06-19 Binggoo 1.可以区分是亮缺陷还是暗缺陷，即气孔和夹渣。
+//                    2.修改定位模板匹配，之前比较ROI老出错(还有问题，旋转之后比较结果不对，待解决）
 
 
 #include "stdafx.h"
@@ -1718,15 +1720,17 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 	// 右转90度
 	Image = Image.RotateImage(270,"constant");
-
-	pDoc->SetImage(Image);
-
 	double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
 
 	if (dbGamma != 1.0)
 	{
+		pDoc->SetImage(Image,FALSE);
 		HImage hGammaImage = GammaImage(Image,dbGamma);
 		pDoc->SetImage(hGammaImage,TRUE,FALSE);
+	}
+	else
+	{
+		pDoc->SetImage(Image);
 	}
 
 	m_Stopwatch.Stop();
@@ -2029,14 +2033,16 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 	// 右转90度
 	Image = Image.RotateImage(270,"constant");
 
-	pDoc->SetImage(Image);
-
 	double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
 
 	if (dbGamma != 1.0)
 	{
 		HImage hGammaImage = GammaImage(Image,dbGamma);
-		pDoc->SetImage(hGammaImage,TRUE,FALSE);
+		pDoc->SetImage(hGammaImage);
+	}
+	else
+	{
+		pDoc->SetImage(Image);
 	}
 
 	return 0;
@@ -3279,17 +3285,16 @@ void CCOXRayView::OnBtnCheck()
 
 	double dbZoomScale = pDoc->GetZoomFactor();
 
-	//16 位转换为8位
 	HImage hImageDst = pImage->CopyImage();
-
-	if (GetImageBits(hImageDst) == 16)
-	{
-		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-	}
+	//16 位转换为8位
+// 	if (GetImageBits(hImageDst) == 16)
+// 	{
+// 		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+// 	}
 
 	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0;
 	int nMinGray = 0,nMaxGray = 0,nOffsetGray = 0;
-	HRegionArray hRegions;
+	HRegionArray hLightRegions,hDarkRegions;
 
 	m_ProjectXml.ResetPos();
 
@@ -3359,16 +3364,16 @@ void CCOXRayView::OnBtnCheck()
 
 				hImageModel = HImage::ReadImage(file);
 
-				if (GetImageBits(hImageModel) == 16)
-				{
-					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
-				}
+// 				if (GetImageBits(hImageModel) == 16)
+// 				{
+// 					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
+// 				}
 
 				m_ProjectXml.OutOfElem();
 			}
 
 			// 找定位点
-			double dbRowRef = 0.0,dbColumnRef = 0.0;
+			double dbRowRef = 0.0,dbColumnRef = 0.0,dbAngle;
 
 			m_ProjectXml.ResetChildPos();
 			if (m_ProjectXml.FindChildElem(_T("RowRef")))
@@ -3390,6 +3395,29 @@ void CCOXRayView::OnBtnCheck()
 				m_ProjectXml.OutOfElem();
 			}
 
+			m_ProjectXml.ResetChildPos();
+			if (m_ProjectXml.FindChildElem(_T("Angle")))
+			{
+				m_ProjectXml.IntoElem();
+
+				dbAngle = _ttof(m_ProjectXml.GetData());
+
+				m_ProjectXml.OutOfElem();
+			}
+
+			// 判断模板与比对图像格式是否匹配
+			if (GetImageBits(hImageModel) != GetImageBits(hImageDst))
+			{
+				AfxMessageBox(_T("模板图像与待测图像格式不匹配！"));
+				return;
+			}
+
+			if (hImageModel.Width() != hImageDst.Width() || hImageModel.Height() != hImageDst.Height())
+			{
+				AfxMessageBox(_T("模板图像与待测图像大小不一样！"));
+				return;
+			}
+
 			HTuple htNumLevels,htAngleStart,htAngleExtent,htAngleStep,htScaleMin,htScaleMax,htScaleStep,htMetric,htMinContrast;
 			htNumLevels = hShapModel.GetShapeModelParams(&htAngleStart,&htAngleExtent,&htAngleStep
 				,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
@@ -3403,7 +3431,7 @@ void CCOXRayView::OnBtnCheck()
 				m_pHWindow->DispCross(htRow[0].D() * dbZoomScale,htColumn[0].D() * dbZoomScale,6.0,htAngle);
 
 				HTuple htHomMat2D;
-				vector_angle_to_rigid(dbRowRef,dbColumnRef,0,htRow,htColumn,htAngle,&htHomMat2D);
+				vector_angle_to_rigid(dbRowRef,dbColumnRef,dbAngle,htRow,htColumn,htAngle,&htHomMat2D);
 
 				hImageModel = hImageModel.AffineTransImage(htHomMat2D,"constant","false");
 
@@ -3429,24 +3457,39 @@ void CCOXRayView::OnBtnCheck()
 						HImage hReduceImage = hImageDst.ReduceDomain(hRegionRect);
 						HImage hReduceModel = hImageModel.ReduceDomain(hRegionRect);
 
-						HRegion hRegionDifferent = hReduceImage.CheckDifference(hReduceModel,"diff_outside",nMinGray,nMaxGray,nOffsetGray,0,0);
+						HRegion light,dark;
+						//HRegion hRegionDifferent = hReduceImage.CheckDifference(hReduceModel,"diff_outside",nMinGray,nMaxGray,nOffsetGray,0,0);
+						light = CheckDifference(hReduceModel,hReduceImage,nMinGray,nMaxGray,&dark);
 
-						if (hRegionDifferent.Area() > 0)
+						if (light.Area() > 0)
 						{
-							HRegionArray hConnects = hRegionDifferent.Connection();
+							HRegionArray hConnects = light.Connection();
 
 							hConnects = hConnects.ZoomRegion(dbZoomScale,dbZoomScale);
 
-							hRegions.Append(hConnects);
+							hLightRegions.Append(hConnects);
+						}
+
+						if (dark.Area() > 0)
+						{
+							HRegionArray hConnects = dark.Connection();
+
+							hConnects = hConnects.ZoomRegion(dbZoomScale,dbZoomScale);
+
+							hDarkRegions.Append(hConnects);
 						}
 						
 					}
 				}
 
-				hRegions = hRegions.Connection();
+				hDarkRegions = hDarkRegions.Connection();
+				hLightRegions = hLightRegions.Connection();
+
 				HTuple htArea,htRow,htColumn;
+				HRegionArray hRegions = hDarkRegions.Append(hLightRegions);
 
 				htArea = hRegions.AreaCenter(&htRow,&htColumn);
+
 
 				if (htArea.Num() == 0)
 				{
@@ -3481,24 +3524,22 @@ void CCOXRayView::OnBtnCheck()
 					USES_CONVERSION;
 					char *text = W2A(strText);
 
+					m_pHWindow->SetColor("blue");
+					m_pHWindow->Display(hDarkRegions);
+
+					m_pHWindow->SetColor("yellow");
+					m_pHWindow->Display(hLightRegions);
+
 					if (bPass)
 					{
-						m_pHWindow->SetColor("green");
-						m_pHWindow->Display(hRegions);
-
 						DisplayMessage(m_pHWindow,text,20,12,12,"green",TRUE);
 					}
 					else
 					{
-						m_pHWindow->SetColor("red");
-						m_pHWindow->Display(hRegions);
-
 						DisplayMessage(m_pHWindow,text,20,12,12,"red",TRUE);
 					}
 					
 				}
-
-				
 			}
 			else
 			{

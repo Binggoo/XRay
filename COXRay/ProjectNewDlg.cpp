@@ -190,6 +190,11 @@ void CProjectNewDlg::OnBnClickedOk()
 	m_IniCustomer.WriteString(strCustomerName,strCustomerName,NULL);
 	m_IniCustomer.DeleteKey(strCustomerName,strCustomerName);
 
+	if (m_pXml == NULL)
+	{
+		m_pXml = new CMarkup;
+	}
+
 	m_pXml->ResetPos();
 	if (!m_pXml->FindElem(_T("COXRay")))
 	{
@@ -198,7 +203,7 @@ void CProjectNewDlg::OnBnClickedOk()
 
 	if (!m_pXml->FindChildElem(_T("Project")))
 	{
-		m_pXml->AddElem(_T("Project"));
+		m_pXml->AddChildElem(_T("Project"));
 	}
 
 	m_pXml->IntoElem();

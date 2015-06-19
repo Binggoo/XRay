@@ -46,7 +46,6 @@ void CPageFilterParm::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_CURRENT, m_dbEditCurrentmA);
 	DDX_Control(pDX, IDC_LIST_AREAS, m_ListCtrlInpectAreas);
 	DDX_Text(pDX,IDC_EDIT_ERROR,m_nEditErrorValue);
-	DDV_MinMaxUInt(pDX, m_nEditErrorValue, 0, 255);
 	DDX_Control(pDX,IDC_COMBO_UNITS,m_ComboBoxUnits);
 	DDX_Text(pDX,IDC_EDIT_PER_PIXEL,m_dbPerPixel);
 }
@@ -432,61 +431,6 @@ void CPageFilterParm::OnBnClickedBtnDeleteArea()
 void CPageFilterParm::OnBnClickedBtnAddRange()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	/*
-	CMainFrame *pFrame = (CMainFrame *)AfxGetMainWnd();
-	if (pFrame == NULL)
-	{
-		return;
-	}
-
-	CCOXRayView *pView = (CCOXRayView *)pFrame->GetActiveView();
-	if (pView == NULL)
-	{
-		return;
-	}
-	CCOXRayDoc *pDoc = pView->GetDocument();
-	if (pDoc == NULL)
-	{
-		return;
-	}
-
-	HImage *pImage = pDoc->GetImage();
-	if (pImage == NULL)
-	{
-		return;
-	}
-
-	HWindow *pHWindow = pView->GetHWindow();
-	if (pHWindow == NULL)
-	{
-		return;
-	}
-
-	m_bLoacte = FALSE;
-
-	POSITION pos = m_ListCtrlInpectAreas.GetFirstSelectedItemPosition();
-
-	int nItem = m_ListCtrlInpectAreas.GetNextSelectedItem(pos);
-	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0;
-
-	dbRow = _ttof(m_ListCtrlInpectAreas.GetItemText(nItem,3)) * pDoc->GetZoomFactor();
-	dbColumn = _ttof(m_ListCtrlInpectAreas.GetItemText(nItem,4)) * pDoc->GetZoomFactor();
-	dbPhi = _ttof(m_ListCtrlInpectAreas.GetItemText(nItem,5));
-	dbLen1 = _ttof(m_ListCtrlInpectAreas.GetItemText(nItem,6)) * pDoc->GetZoomFactor();
-	dbLen2 = _ttof(m_ListCtrlInpectAreas.GetItemText(nItem,7)) * pDoc->GetZoomFactor();
-
-	HRegion hRegion = HRegion::GenRectangle2(dbRow,dbColumn,dbPhi,dbLen1,dbLen2);
-
-	if (m_pHistoDlg == NULL)
-	{
-		m_pHistoDlg = new CHistogramDlg(this);
-		m_pHistoDlg->Create(IDD_DIALOG_GRAY_HISTO,this);
-	}
-
-	m_pHistoDlg->SetRegion(hRegion);
-	m_pHistoDlg->UpdateWindow();
-	m_pHistoDlg->ShowWindow(SW_SHOW);
-	*/
 	UpdateData(TRUE);
 
 	POSITION pos = m_ListCtrlInpectAreas.GetFirstSelectedItemPosition();
@@ -661,7 +605,7 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 
 
 			// 找定位点
-			double dbRowRef = 0.0,dbColumnRef = 0.0,dbOrientation = 0.0;
+			double dbRowRef = 0.0,dbColumnRef = 0.0,dbAngle = 0.0;
 
 			m_pXml->ResetChildPos();
 			if (m_pXml->FindChildElem(_T("RowRef")))
@@ -684,11 +628,11 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 			}
 
 			m_pXml->ResetChildPos();
-			if (m_pXml->FindChildElem(_T("Orientation")))
+			if (m_pXml->FindChildElem(_T("Angle")))
 			{
 				m_pXml->IntoElem();
 
-				dbOrientation = _ttof(m_pXml->GetData());
+				dbAngle = _ttof(m_pXml->GetData());
 
 				m_pXml->OutOfElem();
 			}
@@ -705,7 +649,7 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 			if (htScore.Num() == 1)
 			{
 				HTuple HomMat2D;
-				vector_angle_to_rigid(dbRowRef,dbColumnRef,0,htRow,htColumn,htAngle,&HomMat2D);
+				vector_angle_to_rigid(dbRowRef,dbColumnRef,dbAngle,htRow,htColumn,htAngle,&HomMat2D);
 
 				for (int i = 0; i < nAreaCount;i++)
 				{
@@ -855,7 +799,7 @@ void CPageFilterParm::OnBnClickedBtnAddArea()
 			m_pXml->SetChildAttrib(_T("MinGray"),0);
 			m_pXml->SetChildAttrib(_T("MaxGray"),0);
 
-			strData.Format(_T("%.f"),htRow[0].D() / pDoc->GetZoomFactor());
+			strData.Format(_T("%f"),htRow[0].D() / pDoc->GetZoomFactor());
 			m_ListCtrlInpectAreas.SetItemText(nCount,3,strData);
 			m_pXml->SetChildAttrib(_T("Row"),strData);
 
@@ -921,41 +865,6 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 		return;
 	}
 
-	/*
-	pDoc->UpdateAllViews(NULL,WM_USER_NEWIMAGE);
-
-	pHWindow->SetDraw("margin");
-	pHWindow->SetLineWidth(1);
-	pHWindow->SetColor("green");
-
-	int nCount = m_ListCtrlInpectAreas.GetItemCount();
-	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0,dbMinGray = 0.0,dbMaxGray = 0.0;
-	HRegionArray hRegions;
-	double dbZommFactor = pDoc->GetZoomFactor();
-	HImage hScaleImage = pImage->ZoomImageFactor(dbZommFactor,dbZommFactor,"constant");
-	for (int i = 0; i < nCount; i++)
-	{
-		dbMinGray = _ttof(m_ListCtrlInpectAreas.GetItemText(i,1));
-		dbMaxGray = _ttof(m_ListCtrlInpectAreas.GetItemText(i,2));
-		dbRow = _ttof(m_ListCtrlInpectAreas.GetItemText(i,3)) * pDoc->GetZoomFactor();
-		dbColumn = _ttof(m_ListCtrlInpectAreas.GetItemText(i,4)) * pDoc->GetZoomFactor();
-		dbPhi = _ttof(m_ListCtrlInpectAreas.GetItemText(i,5));
-		dbLen1 = _ttof(m_ListCtrlInpectAreas.GetItemText(i,6)) * pDoc->GetZoomFactor();
-		dbLen2 = _ttof(m_ListCtrlInpectAreas.GetItemText(i,7)) * pDoc->GetZoomFactor();
-
-		HRegion hRegion = HRegion::GenRectangle2(dbRow,dbColumn,dbPhi,dbLen1,dbLen2);
-
-		HImage hReduceImage = hScaleImage.ReduceDomain(hRegion);
-
-		HRegion hRegionThreshold = hReduceImage.Threshold(dbMinGray,dbMaxGray);
-		HRegionArray hConnects = hRegionThreshold.Connection();
-
-		hRegions.Append(hConnects);
-	}
-
-	pHWindow->Display(hRegions);
-	*/
-
 	pDoc->UpdateAllViews(NULL,WM_USER_NEWIMAGE);
 
 	pHWindow->SetDraw("margin");
@@ -963,17 +872,17 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 
 	double dbZoomScale = pDoc->GetZoomFactor();
 
-	//16 位转换为8位
 	HImage hImageDst = pImage->CopyImage();
 
-	if (GetImageBits(hImageDst) == 16)
-	{
-		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-	}
+	//16 位转换为8位
+// 	if (GetImageBits(hImageDst) == 16)
+// 	{
+// 		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+// 	}
 
 	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0;
 	int nMinGray = 0,nMaxGray = 0,nOffsetGray = 0;
-	HRegionArray hRegions;
+	HRegionArray hDarkRegions,hLightRegions;
 
 	m_pXml->ResetPos();
 
@@ -1043,16 +952,16 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 
 				hImageModel = HImage::ReadImage(file);
 
-				if (GetImageBits(hImageModel) == 16)
-				{
-					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
-				}
+// 				if (GetImageBits(hImageModel) == 16)
+// 				{
+// 					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
+// 				}
 
 				m_pXml->OutOfElem();
 			}
 
 			// 找定位点
-			double dbRowRef = 0.0,dbColumnRef = 0.0;
+			double dbRowRef = 0.0,dbColumnRef = 0.0,dbAngle = 0.0;
 
 			m_pXml->ResetChildPos();
 			if (m_pXml->FindChildElem(_T("RowRef")))
@@ -1074,6 +983,29 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 				m_pXml->OutOfElem();
 			}
 
+			m_pXml->ResetChildPos();
+			if (m_pXml->FindChildElem(_T("Angle")))
+			{
+				m_pXml->IntoElem();
+
+				dbAngle = _ttof(m_pXml->GetData());
+
+				m_pXml->OutOfElem();
+			}
+
+			// 判断模板与比对图像格式是否匹配
+			if (GetImageBits(hImageModel) != GetImageBits(hImageDst))
+			{
+				AfxMessageBox(_T("模板图像与待测图像格式不匹配！"));
+				return;
+			}
+
+			if (hImageModel.Width() != hImageDst.Width() || hImageModel.Height() != hImageDst.Height())
+			{
+				AfxMessageBox(_T("模板图像与待测图像大小不一样！"));
+				return;
+			}
+
 			HTuple htNumLevels,htAngleStart,htAngleExtent,htAngleStep,htScaleMin,htScaleMax,htScaleStep,htMetric,htMinContrast;
 			htNumLevels = hShapModel.GetShapeModelParams(&htAngleStart,&htAngleExtent,&htAngleStep
 				,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
@@ -1087,7 +1019,7 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 				pHWindow->DispCross(htRow[0].D() * dbZoomScale,htColumn[0].D() * dbZoomScale,10.0,htAngle);
 
 				HTuple htHomMat2D;
-				vector_angle_to_rigid(dbRowRef,dbColumnRef,0,htRow,htColumn,htAngle,&htHomMat2D);
+				vector_angle_to_rigid(dbRowRef,dbColumnRef,dbAngle,htRow,htColumn,htAngle,&htHomMat2D);
 
 				hImageModel = hImageModel.AffineTransImage(htHomMat2D,"constant","false");
 
@@ -1114,21 +1046,36 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 						HImage hReduceModel = hImageModel.ReduceDomain(hRegionRect);
 						
 
-						HRegion hRegionDifferent = hReduceImage.CheckDifference(hReduceModel,"diff_outside",nMinGray,nMaxGray,nOffsetGray,0,0);
+						//HRegion hRegionDifferent = hReduceImage.CheckDifference(hReduceModel,"diff_outside",nMinGray,nMaxGray,nOffsetGray,0,0);
+						HRegion light,dark;
+						light = CheckDifference(hReduceModel,hReduceImage,nMinGray,nMaxGray,&dark);
 
-						if (hRegionDifferent.Area() > 0)
+						if (light.Area() > 0)
 						{
-							HRegionArray hConnects = hRegionDifferent.Connection();
+							HRegionArray hConnects = light.Connection();
 
 							hConnects = hConnects.ZoomRegion(dbZoomScale,dbZoomScale);
 
-							hRegions.Append(hConnects);
+							hLightRegions.Append(hConnects);
+						}
+
+						if (dark.Area() > 0)
+						{
+							HRegionArray hConnects = dark.Connection();
+
+							hConnects = hConnects.ZoomRegion(dbZoomScale,dbZoomScale);
+
+							hDarkRegions.Append(hConnects);
 						}
 
 					}
 				}
 
-				hRegions = hRegions.Connection();
+				hLightRegions = hLightRegions.Connection();
+				hDarkRegions = hDarkRegions.Connection();
+
+				HRegionArray hRegions = hDarkRegions.Append(hLightRegions);
+
 				HTuple htArea,htRow,htColumn;
 
 				htArea = hRegions.AreaCenter(&htRow,&htColumn);
@@ -1139,8 +1086,11 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 				}
 				else
 				{
-					pHWindow->SetColor("red");
-					pHWindow->Display(hRegions);
+					pHWindow->SetColor("blue");
+					pHWindow->Display(hDarkRegions);
+
+					pHWindow->SetColor("yellow");
+					pHWindow->Display(hLightRegions);
 
 					CString strText;
 					strText.Format(_T("缺陷总大小=%.0f %s"),htArea.Sum()[0].D() * dbPerPixel * dbPerPixel,strUnit);
@@ -1220,13 +1170,13 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 			return 1;
 		}
 
-		//16 位转换为8位
 		HImage hImageDst = pImage->CopyImage();
 
-		if (GetImageBits(hImageDst) == 16)
-		{
-			hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-		}
+		//16 位转换为8位
+// 		if (GetImageBits(hImageDst) == 16)
+// 		{
+// 			hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+// 		}
 
 		double dbZoomScale = 1 / pDoc->GetZoomFactor();
 
@@ -1236,16 +1186,23 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 
 		htRegion = hReduceImage.Threshold(wParam,lParam);
 
-		htRegion = htRegion.Connection();
-
-		double dbRowRef,dbColumnRef,dbOrientation;
-		htRegion.AreaCenter(&dbRowRef,&dbColumnRef);
-		dbOrientation = htRegion.OrientationRegion();
-
 		hReduceImage = hReduceImage.ReduceDomain(htRegion);
 
-		HShapeModel hShapModel = hReduceImage.CreateShapeModel("auto",-ANGEL,2*ANGEL,"auto","none","use_polarity","auto","auto");
+		HShapeModel hShapModel = hReduceImage.CreateShapeModel("auto",0,2*ANGEL,"auto","none","use_polarity","auto","auto");
 
+		HTuple htNumLevels,htAngleStart,htAngleExtent,htAngleStep,htScaleMin,htScaleMax,htScaleStep,htMetric,htMinContrast;
+		htNumLevels = hShapModel.GetShapeModelParams(&htAngleStart,&htAngleExtent,&htAngleStep
+			,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
+
+		HTuple htRow,htColumn,htAngle,htScore,htScale;
+		htRow = hShapModel.FindShapeModel(*pImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
+
+		if (htScore.Num() == 0)
+		{
+			AfxMessageBox(_T("创建模板失败！"));
+			return 1;
+		}
+		
 		// 保存定位
 		CString strFilePath = CUtils::GetFilePathWithoutName(CUtils::GetAppPath()) + _T("\\shm");
 
@@ -1273,7 +1230,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 					m_pXml->OutOfElem();
 
 					strShmFile.Format(_T("%s\\%s_%s.shm"),strFilePath,strProjectName,strPos);
-					strModelFile.Format(_T("%s\\%s_%s.bmp"),strFilePath,strProjectName,strPos);
+					strModelFile.Format(_T("%s\\%s_%s.tif"),strFilePath,strProjectName,strPos);
 
 					USES_CONVERSION;
 					char *file = W2A(strShmFile);
@@ -1281,7 +1238,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 					hShapModel.WriteShapeModel(file);
 
 					file = W2A(strModelFile);
-					hImageDst.WriteImage("bmp",0,image);
+					hImageDst.WriteImage("tiff",0,image);
 
 					if (m_pXml->FindChildElem(strPos))
 					{
@@ -1312,7 +1269,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 						}
 
 						CString strData;
-						strData.Format(_T("%.f"),dbRowRef);
+						strData.Format(_T("%.16f"),htRow[0].D());
 
 						m_pXml->ResetChildPos();
 						if (m_pXml->FindChildElem(_T("RowRef")))
@@ -1326,7 +1283,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 							m_pXml->AddChildElem(_T("RowRef"),strData);
 						}
 
-						strData.Format(_T("%.f"),dbColumnRef);
+						strData.Format(_T("%.16f"),htColumn[0].D());
 						if (m_pXml->FindChildElem(_T("ColumnRef")))
 						{
 							m_pXml->IntoElem();
@@ -1338,8 +1295,8 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 							m_pXml->AddChildElem(_T("ColumnRef"),strData);
 						}
 
-						strData.Format(_T("%.f"),dbOrientation);
-						if (m_pXml->FindChildElem(_T("Orientation")))
+						strData.Format(_T("%.16f"),htAngle[0].D());
+						if (m_pXml->FindChildElem(_T("Angle")))
 						{
 							m_pXml->IntoElem();
 							m_pXml->SetData(strData);
@@ -1347,7 +1304,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 						}
 						else
 						{
-							m_pXml->AddChildElem(_T("Orientation"),strData);
+							m_pXml->AddChildElem(_T("Angle"),strData);
 						}
 						
 						m_pXml->Save();
@@ -1363,59 +1320,6 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
-
-	/*
-	POSITION pos = m_ListCtrlInpectAreas.GetFirstSelectedItemPosition();
-
-	if (pos == NULL)
-	{
-		AfxMessageBox(_T("请选中列表中的某一行！"));
-		return 1;
-	}
-
-	int nItem = m_ListCtrlInpectAreas.GetNextSelectedItem(pos);
-
-	CString strMinGray,strMaxGray;
-	strMinGray.Format(_T("%d"),wParam);
-	strMaxGray.Format(_T("%d"),lParam);
-
-	m_ListCtrlInpectAreas.SetItemText(nItem,1,strMinGray);
-	m_ListCtrlInpectAreas.SetItemText(nItem,2,strMaxGray);
-
-	CString strPos,strArea;
-	strPos.Format(_T("POS%d"),m_dwCurrentPos);
-	strArea = m_ListCtrlInpectAreas.GetItemText(nItem,0);
-
-	if (m_pXml->IsWellFormed())
-	{
-		m_pXml->ResetPos();
-
-		if (m_pXml->FindChildElem(_T("Project")))
-		{
-			m_pXml->IntoElem();
-
-			if (!m_pXml->FindChildElem(strPos))
-			{
-				m_pXml->AddChildElem(strPos);
-			}
-
-			m_pXml->IntoElem();
-
-			if (m_pXml->FindChildElem(strArea))
-			{
-				m_pXml->SetChildAttrib(_T("MinGray"),strMinGray);
-				m_pXml->SetChildAttrib(_T("MaxGray"),strMaxGray);
-
-				m_pXml->Save();
-			}
-
-			m_pXml->OutOfElem();
-
-			m_pXml->OutOfElem();
-		}
-	}
-	return 0;
-	*/
 }
 
 
@@ -1627,7 +1531,7 @@ void CPageFilterParm::OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult)
 
 
 				// 找定位点
-				double dbRowRef = 0.0,dbColumnRef = 0.0,dbOrientation = 0.0;
+				double dbRowRef = 0.0,dbColumnRef = 0.0,dbAngle = 0.0;
 
 				m_pXml->ResetChildPos();
 				if (m_pXml->FindChildElem(_T("RowRef")))
@@ -1650,11 +1554,11 @@ void CPageFilterParm::OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult)
 				}
 
 				m_pXml->ResetChildPos();
-				if (m_pXml->FindChildElem(_T("Orientation")))
+				if (m_pXml->FindChildElem(_T("Angle")))
 				{
 					m_pXml->IntoElem();
 
-					dbOrientation = _ttof(m_pXml->GetData());
+					dbAngle = _ttof(m_pXml->GetData());
 
 					m_pXml->OutOfElem();
 				}
@@ -1672,7 +1576,7 @@ void CPageFilterParm::OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult)
 					pHWindow->DispCross(htRow[0].D() * dbZoomScale,htColumn[0].D() * dbZoomScale,10.0,htAngle);
 
 					HTuple HomMat2D;
-					vector_angle_to_rigid(dbRowRef,dbColumnRef,0,htRow,htColumn,htAngle,&HomMat2D);
+					vector_angle_to_rigid(dbRowRef,dbColumnRef,dbAngle,htRow,htColumn,htAngle,&HomMat2D);
 
 					//for (int i = 0; i < nAreaCount;i++)
 					{

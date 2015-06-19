@@ -1,4 +1,3 @@
-#pragma once
 // 下列 ifdef 块是创建使从 DLL 导出更简单的
 // 宏的标准方法。此 DLL 中的所有文件都是用命令行上定义的 IMAGEPROCESS_EXPORTS
 // 符号编译的。在使用此 DLL 的
@@ -16,6 +15,8 @@ IMAGEPROCESS_API int GetImageBits(const HImage &Image);
 IMAGEPROCESS_API HImage GammaImage(const HImage &Image,double gamma); // Gamma校正
 // 比较2副图像
 IMAGEPROCESS_API HRegion CheckDifference(const HImage& Image,const HImage& Pattern, const HTuple& Mode, const HTuple& DiffLowerBound, const HTuple& DiffUpperBound, const HTuple& GrayOffset, const HTuple& AddRow, const HTuple& AddCol);
+// 比较2副图像，分析出亮的部分和暗的部分
+IMAGEPROCESS_API HRegion CheckDifference(const HImage& Model,const HImage& Check,const HTuple& DiffLowerBound, const HTuple& DiffUpperBound,HRegion *Dark);
 // 显示匹配结果
 IMAGEPROCESS_API void DisplayShapMatchingResult(HWindow *hWindow,HShapeModel hShapModel,HTuple Color,HTuple Row,HTuple Column,HTuple Angle,HTuple ScaleR,HTuple ScaleC,double Scale);
 // 图像格式转换

@@ -205,6 +205,7 @@ BOOL CCOXRayDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	m_UndoType.RemoveAll();
 
 	m_Stopwatch.Start();
+	HImage Image;
 	try
 	{
 		*m_pHWorkImage = HImage::ReadImage(filename);
@@ -858,6 +859,8 @@ void CCOXRayDoc::SetImage( HImage Image,BOOL bUpdateWindow/* = TRUE*/,BOOL bNew 
 		m_pOriginImage = new HImage();
 	}
 
+	*m_pHWorkImage = Image.CopyImage();
+
 	if (bNew)
 	{
 		ClearUndoDraw();
@@ -865,16 +868,17 @@ void CCOXRayDoc::SetImage( HImage Image,BOOL bUpdateWindow/* = TRUE*/,BOOL bNew 
 		m_UndoType.RemoveAll();
 
 		*m_pOriginImage = Image.CopyImage();
+
+		FitWindow(bUpdateWindow);
 	}
 	else
 	{
 		SubmitUndoImage();
+
+		UpdateAllViews(NULL,WM_USER_NEWIMAGE);
 	}
 	
-	*m_pHWorkImage = Image.CopyImage();
-
-	//UpdateAllViews(NULL,WM_USER_NEWIMAGE);
-	FitWindow(bUpdateWindow);
+	
 }
 
 void CCOXRayDoc::ClearUndoDraw()
