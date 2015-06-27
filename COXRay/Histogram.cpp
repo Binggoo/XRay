@@ -95,9 +95,9 @@ void CHistogram::DrawHisto( CDC *pDC )
 	CPen pen(PS_SOLID,1,m_colLine);
 	CPen *oldPen = (CPen *)pDC->SelectObject(&pen);
 
-	for (int i = m_nLeft - 1; i < m_nRight;i++)
+	for (int i = m_nLeft; i <= m_nRight;i++)
 	{
-		int x = m_RectFrame.left + dbPixXPerGrayValue * (i + 1 - m_nLeft);
+		int x = m_RectFrame.left + dbPixXPerGrayValue * (i - m_nLeft);
 		int y = m_RectFrame.bottom - dbPixYPerFreq * m_htAbsoluteHisto[i].L();
 
 		pDC->MoveTo(x,m_RectFrame.bottom);

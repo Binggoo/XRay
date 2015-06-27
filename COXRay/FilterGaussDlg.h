@@ -22,9 +22,13 @@ protected:
 private:
 	CComboBox m_ComboBoxFilterSize;
 	long m_lFilterSize;
+	BOOL m_bCheckNoRemind;
+	CIni *m_pIni;
 public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOk();
 
-	long GetFilterSize() {return m_lFilterSize;}
+	long GetFilterSize() {return m_lFilterSize;};
+
+	void SetConfig(CIni *pIni) {m_pIni = pIni;};
 };

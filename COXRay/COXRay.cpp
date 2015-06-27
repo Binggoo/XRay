@@ -176,6 +176,8 @@ protected:
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+//	afx_msg void OnUpdateFilterMean(CCmdUI *pCmdUI);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
@@ -188,6 +190,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+//	ON_UPDATE_COMMAND_UI(ID_FILTER_MEAN, &CAboutDlg::OnUpdateFilterMean)
 END_MESSAGE_MAP()
 
 // 用于运行对话框的应用程序命令
@@ -227,3 +230,9 @@ void CCOXRayApp::OnFileOpen()
 }
 
 // CCOXRayApp 消息处理程序
+
+
+//void CAboutDlg::OnUpdateFilterMean(CCmdUI *pCmdUI)
+//{
+//	// TODO: 在此添加命令更新用户界面处理程序代码
+//}

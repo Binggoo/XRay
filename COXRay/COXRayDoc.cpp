@@ -47,6 +47,28 @@ BEGIN_MESSAGE_MAP(CCOXRayDoc, CDocument)
 	ON_COMMAND(ID_EDIT_UNDO, &CCOXRayDoc::OnEditUndo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, &CCOXRayDoc::OnUpdateEditUndo)
 	ON_COMMAND(IDC_BTN_ENHANCE, &CCOXRayDoc::OnBtnEnhance)
+	ON_UPDATE_COMMAND_UI(ID_FILTER_MEAN, &CCOXRayDoc::OnUpdateFilterMean)
+	ON_COMMAND(ID_FILTER_MEAN, &CCOXRayDoc::OnFilterMean)
+	ON_UPDATE_COMMAND_UI(ID_FILTER_MEDIAN, &CCOXRayDoc::OnUpdateFilterMedian)
+	ON_COMMAND(ID_FILTER_MEDIAN, &CCOXRayDoc::OnFilterMedian)
+	ON_UPDATE_COMMAND_UI(ID_FILTER_GAUSS, &CCOXRayDoc::OnUpdateFilterGauss)
+	ON_COMMAND(ID_FILTER_GAUSS, &CCOXRayDoc::OnFilterGauss)
+	ON_UPDATE_COMMAND_UI(ID_ENHANCE_CONTRAST, &CCOXRayDoc::OnUpdateEnhanceContrast)
+	ON_COMMAND(ID_ENHANCE_CONTRAST, &CCOXRayDoc::OnEnhanceContrast)
+	ON_UPDATE_COMMAND_UI(ID_ENHANCE_EDGES, &CCOXRayDoc::OnUpdateEnhanceEdges)
+	ON_COMMAND(ID_ENHANCE_EDGES, &CCOXRayDoc::OnEnhanceEdges)
+	ON_UPDATE_COMMAND_UI(ID_ROTATE_LEFT, &CCOXRayDoc::OnUpdateRotateLeft)
+	ON_COMMAND(ID_ROTATE_LEFT, &CCOXRayDoc::OnRotateLeft)
+	ON_UPDATE_COMMAND_UI(ID_ROTATE_RIGHT, &CCOXRayDoc::OnUpdateRotateRight)
+	ON_COMMAND(ID_ROTATE_RIGHT, &CCOXRayDoc::OnRotateRight)
+	ON_UPDATE_COMMAND_UI(ID_ROTATE_ANY, &CCOXRayDoc::OnUpdateRotateAny)
+	ON_COMMAND(ID_ROTATE_ANY, &CCOXRayDoc::OnRotateAny)
+	ON_UPDATE_COMMAND_UI(ID_FLIP_HORZ, &CCOXRayDoc::OnUpdateFlipHorz)
+	ON_COMMAND(ID_FLIP_HORZ, &CCOXRayDoc::OnFlipHorz)
+	ON_UPDATE_COMMAND_UI(ID_FLIP_VERT, &CCOXRayDoc::OnUpdateFlipVert)
+	ON_COMMAND(ID_FLIP_VERT, &CCOXRayDoc::OnFlipVert)
+	ON_UPDATE_COMMAND_UI(ID_INVERT, &CCOXRayDoc::OnUpdateInvert)
+	ON_COMMAND(ID_INVERT, &CCOXRayDoc::OnInvert)
 END_MESSAGE_MAP()
 
 
@@ -222,6 +244,12 @@ BOOL CCOXRayDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	
 	m_Stopwatch.Stop();
 
+	// 转换为8位3通道
+// 	if (GetImageBits(*m_pHWorkImage) == 16)
+// 	{
+// 		*m_pHWorkImage = ConvertImage(*m_pHWorkImage,IPL_DEPTH_8U,3);
+// 	}
+
 	// 备份原始图像
 	*m_pOriginImage = *m_pHWorkImage;
 
@@ -229,11 +257,11 @@ BOOL CCOXRayDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	m_nChanels = m_pHWorkImage->CountChannels();
 
 	// 转换为灰度图像
-	if (m_nChanels > 1)
-	{
-		*m_pHWorkImage = m_pHWorkImage->Rgb1ToGray();
-		m_nChanels = 1;
-	}
+// 	if (m_nChanels > 1)
+// 	{
+// 		*m_pHWorkImage = m_pHWorkImage->Rgb1ToGray();
+// 		m_nChanels = 1;
+// 	}
 
 	CString strTime,strInfo,strExt,strZoom;
 	strExt = CUtils::GetFileExt(lpszPathName);
@@ -630,16 +658,20 @@ void CCOXRayDoc::OnBtnMean()
 
 	long maskWidth,maskHeight;
 
-	CFilterMeanDlg dlg;
-	if (dlg.DoModal() == IDCANCEL)
+	if (!m_pIni->GetBool(_T("MeanFilter"),_T("En_NoRemind"),FALSE))
 	{
-		return;
+		CFilterMeanDlg dlg;
+		dlg.SetConfig(m_pIni);
+		if (dlg.DoModal() == IDCANCEL)
+		{
+			return;
+		}
 	}
 
 	SubmitUndoImage();
 
-	maskHeight = dlg.GetMaskHeight();
-	maskWidth = dlg.GetMaskWidth();
+	maskHeight = m_pIni->GetInt(_T("MeanFilter"),_T("MaskHeight"),9);
+	maskWidth = m_pIni->GetInt(_T("MeanFilter"),_T("MaskWidth"),9);
 
 	m_Stopwatch.Start();
 	HImage Image = m_pHWorkImage->CopyImage();
@@ -665,16 +697,20 @@ void CCOXRayDoc::OnBtnMedian()
 		return;
 	}
 
-	CFilterMedianDlg dlg;
-	if (dlg.DoModal() == IDCANCEL)
+	if (!m_pIni->GetBool(_T("MedianFilter"),_T("En_NoRemind"),FALSE))
 	{
-		return;
+		CFilterMedianDlg dlg;
+		dlg.SetConfig(m_pIni);
+		if (dlg.DoModal() == IDCANCEL)
+		{
+			return;
+		}
 	}
 
 	SubmitUndoImage();
 
-	int iMaskType = dlg.GetMaskType();
-	long lMaskRadius = dlg.GetMaskRadius();
+	int iMaskType = m_pIni->GetInt(_T("MedianFilter"),_T("MaskType"),0);
+	long lMaskRadius = m_pIni->GetInt(_T("MedianFilter"),_T("MaskRadius"),1);
 
 	m_Stopwatch.Start();
 	HImage Image = m_pHWorkImage->CopyImage();
@@ -700,15 +736,20 @@ void CCOXRayDoc::OnBtnGauss()
 		return;
 	}
 
-	CFilterGaussDlg dlg;
-	if (dlg.DoModal() == IDCANCEL)
+	if (!m_pIni->GetBool(_T("GaussFilter"),_T("En_NoRemind"),FALSE))
 	{
-		return;
+		CFilterGaussDlg dlg;
+		dlg.SetConfig(m_pIni);
+		if (dlg.DoModal() == IDCANCEL)
+		{
+			return;
+		}
 	}
+	
 
 	SubmitUndoImage();
 
-	long size = dlg.GetFilterSize();
+	long size = m_pIni->GetInt(_T("GaussFilter"),_T("FilterSize"),5);
 
 	m_Stopwatch.Start();
 	HImage Image = m_pHWorkImage->CopyImage();
@@ -733,21 +774,35 @@ void CCOXRayDoc::OnBtnEnhance()
 		return;
 	}
 
-	CFilterEnhanceDlg dlg;
-	if (dlg.DoModal() == IDCANCEL)
+	if (!m_pIni->GetBool(_T("Enhance"),_T("En_NoRemind"),FALSE))
 	{
-		return;
+		CFilterEnhanceDlg dlg;
+		dlg.SetConfig(m_pIni);
+		if (dlg.DoModal() == IDCANCEL)
+		{
+			return;
+		}
 	}
+
+	
 
 	SubmitUndoImage();
 
-	long maskWidth = dlg.GetMaskWith();
-	long maskHeight = dlg.GetMaskHeight();
-	double dbFactor = dlg.GetFactor();
+	long maskWidth = m_pIni->GetInt(_T("Enhance"),_T("MaskWidth"),7);
+	long maskHeight = m_pIni->GetInt(_T("Enhance"),_T("MaskWidth"),7);
+	double dbFactor = m_pIni->GetDouble(_T("Enhance"),_T("Factor"),1.0);
+	int times = m_pIni->GetInt(_T("Enhance"),_T("Times"),0);
 
 	m_Stopwatch.Start();
 	HImage Image = m_pHWorkImage->CopyImage();
-	*m_pHWorkImage = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
+
+	for (int i = 0; i < times;i++)
+	{
+		Image = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
+	}
+
+	*m_pHWorkImage = Image;
+	
 //	HImage hImageHighPass = m_pHWorkImage->HighpassImage(maskWidth,maskHeight);
 //	*m_pHWorkImage = m_pHWorkImage->AddImage(hImageHighPass,dbFactor,0);
 	m_Stopwatch.Stop();
@@ -961,4 +1016,305 @@ void CCOXRayDoc::FitWindow( BOOL bUpdateWindow /*= TRUE*/ )
 	{
 		UpdateAllViews(NULL,WM_USER_NEWIMAGE);
 	}
+}
+
+
+void CCOXRayDoc::OnUpdateFilterMean(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnFilterMean()
+{
+	// TODO: 在此添加命令处理程序代码
+	long maskWidth,maskHeight;
+
+	CFilterMeanDlg dlg;
+	dlg.SetConfig(m_pIni);
+	if (dlg.DoModal() == IDCANCEL)
+	{
+		return;
+	}
+	
+
+	SubmitUndoImage();
+
+	maskHeight = m_pIni->GetInt(_T("MeanFilter"),_T("MaskHeight"),9);
+	maskWidth = m_pIni->GetInt(_T("MeanFilter"),_T("MaskWidth"),9);
+
+	m_Stopwatch.Start();
+	HImage Image = m_pHWorkImage->CopyImage();
+	*m_pHWorkImage = MeanImage(Image,maskWidth,maskHeight);
+	m_Stopwatch.Stop();
+
+	CString strTime;
+	strTime.Format(_T("Time: %.2f s"),m_Stopwatch.GetSecond());
+	CStatusBar *pStatusBar = ((CMainFrame *)AfxGetMainWnd())->GetStatusBar();
+
+	int nIndex = pStatusBar->CommandToIndex(ID_INDICATOR_TIME);
+	pStatusBar->SetPaneText(nIndex,strTime);
+
+	UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+}
+
+
+void CCOXRayDoc::OnUpdateFilterMedian(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnFilterMedian()
+{
+	// TODO: 在此添加命令处理程序代码
+	
+	CFilterMedianDlg dlg;
+	dlg.SetConfig(m_pIni);
+	if (dlg.DoModal() == IDCANCEL)
+	{
+		return;
+	}
+	
+	SubmitUndoImage();
+
+	int iMaskType = m_pIni->GetInt(_T("MedianFilter"),_T("MaskType"),0);
+	long lMaskRadius = m_pIni->GetInt(_T("MedianFilter"),_T("MaskRadius"),1);
+
+	m_Stopwatch.Start();
+	HImage Image = m_pHWorkImage->CopyImage();
+	*m_pHWorkImage = MedianImage(Image,iMaskType,lMaskRadius);
+	m_Stopwatch.Stop();
+
+	CString strTime;
+	strTime.Format(_T("Time: %.2f s"),m_Stopwatch.GetSecond());
+	CStatusBar *pStatusBar = ((CMainFrame *)AfxGetMainWnd())->GetStatusBar();
+
+	int nIndex = pStatusBar->CommandToIndex(ID_INDICATOR_TIME);
+	pStatusBar->SetPaneText(nIndex,strTime);
+
+	UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+}
+
+
+void CCOXRayDoc::OnUpdateFilterGauss(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnFilterGauss()
+{
+	// TODO: 在此添加命令处理程序代码
+
+	CFilterGaussDlg dlg;
+	dlg.SetConfig(m_pIni);
+	if (dlg.DoModal() == IDCANCEL)
+	{
+		return;
+	}
+	
+
+	SubmitUndoImage();
+
+	long size = m_pIni->GetInt(_T("GaussFilter"),_T("FilterSize"),5);
+
+	m_Stopwatch.Start();
+	HImage Image = m_pHWorkImage->CopyImage();
+	*m_pHWorkImage = GaussImage(Image,size);
+	m_Stopwatch.Stop();
+
+	CString strTime;
+	strTime.Format(_T("Time: %.2f s"),m_Stopwatch.GetSecond());
+	CStatusBar *pStatusBar = ((CMainFrame *)AfxGetMainWnd())->GetStatusBar();
+
+	int nIndex = pStatusBar->CommandToIndex(ID_INDICATOR_TIME);
+	pStatusBar->SetPaneText(nIndex,strTime);
+
+	UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+}
+
+
+void CCOXRayDoc::OnUpdateEnhanceContrast(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnEnhanceContrast()
+{
+	// TODO: 在此添加命令处理程序代码
+	CFilterEnhanceDlg dlg;
+	dlg.SetConfig(m_pIni);
+	if (dlg.DoModal() == IDCANCEL)
+	{
+		return;
+	}
+
+	SubmitUndoImage();
+
+	long maskWidth = m_pIni->GetInt(_T("Enhance"),_T("MaskWidth"),7);
+	long maskHeight = m_pIni->GetInt(_T("Enhance"),_T("MaskWidth"),7);
+	double dbFactor = m_pIni->GetDouble(_T("Enhance"),_T("Factor"),1.0);
+	int times = m_pIni->GetInt(_T("Enhance"),_T("Times"),0);
+
+	m_Stopwatch.Start();
+	HImage Image = m_pHWorkImage->CopyImage();
+
+	for (int i = 0; i < times;i++)
+	{
+		Image = IlluminateImage(Image,maskWidth,maskHeight,dbFactor);
+	}
+
+	*m_pHWorkImage = Image;
+
+	//	HImage hImageHighPass = m_pHWorkImage->HighpassImage(maskWidth,maskHeight);
+	//	*m_pHWorkImage = m_pHWorkImage->AddImage(hImageHighPass,dbFactor,0);
+	m_Stopwatch.Stop();
+
+	CString strTime;
+	strTime.Format(_T("Time: %.2f s"),m_Stopwatch.GetSecond());
+	CStatusBar *pStatusBar = ((CMainFrame *)AfxGetMainWnd())->GetStatusBar();
+
+	int nIndex = pStatusBar->CommandToIndex(ID_INDICATOR_TIME);
+	pStatusBar->SetPaneText(nIndex,strTime);
+
+	UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+}
+
+
+void CCOXRayDoc::OnUpdateEnhanceEdges(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnEnhanceEdges()
+{
+	// TODO: 在此添加命令处理程序代码
+	CFilterEnhanceDlg dlg;
+	dlg.SetConfig(m_pIni);
+	if (dlg.DoModal() == IDCANCEL)
+	{
+		return;
+	}
+
+	SubmitUndoImage();
+
+	long maskWidth = m_pIni->GetInt(_T("Enhance"),_T("MaskWidth"),7);
+	long maskHeight = m_pIni->GetInt(_T("Enhance"),_T("MaskWidth"),7);
+	double dbFactor = m_pIni->GetDouble(_T("Enhance"),_T("Factor"),1.0);
+	int times = m_pIni->GetInt(_T("Enhance"),_T("Times"),0);
+
+	m_Stopwatch.Start();
+	HImage Image = m_pHWorkImage->CopyImage();
+
+	for (int i = 0; i < times;i++)
+	{
+		Image = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
+	}
+
+	*m_pHWorkImage = Image;
+
+	//	HImage hImageHighPass = m_pHWorkImage->HighpassImage(maskWidth,maskHeight);
+	//	*m_pHWorkImage = m_pHWorkImage->AddImage(hImageHighPass,dbFactor,0);
+	m_Stopwatch.Stop();
+
+	CString strTime;
+	strTime.Format(_T("Time: %.2f s"),m_Stopwatch.GetSecond());
+	CStatusBar *pStatusBar = ((CMainFrame *)AfxGetMainWnd())->GetStatusBar();
+
+	int nIndex = pStatusBar->CommandToIndex(ID_INDICATOR_TIME);
+	pStatusBar->SetPaneText(nIndex,strTime);
+
+	UpdateAllViews(NULL,WM_USER_NEWIMAGE);
+}
+
+
+void CCOXRayDoc::OnUpdateRotateLeft(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnRotateLeft()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnRotateLeft();
+}
+
+
+void CCOXRayDoc::OnUpdateRotateRight(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnRotateRight()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnRotateRight();
+}
+
+
+void CCOXRayDoc::OnUpdateRotateAny(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnRotateAny()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnRotate();
+}
+
+
+void CCOXRayDoc::OnUpdateFlipHorz(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnFlipHorz()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnFlip();
+}
+
+
+void CCOXRayDoc::OnUpdateFlipVert(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnFlipVert()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnMirror();
+}
+
+
+void CCOXRayDoc::OnUpdateInvert(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_pHWorkImage != NULL);
+}
+
+
+void CCOXRayDoc::OnInvert()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnNegative();
 }

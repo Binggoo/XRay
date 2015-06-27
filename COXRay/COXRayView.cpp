@@ -15,6 +15,11 @@
 //                    4.解决采集图像后自动完成Gamma校正后不刷新图像的问题。
 // 2015-06-19 Binggoo 1.可以区分是亮缺陷还是暗缺陷，即气孔和夹渣。
 //                    2.修改定位模板匹配，之前比较ROI老出错(还有问题，旋转之后比较结果不对，待解决）
+// 2015-06-24 Binggoo 1.16位图像进行模板匹配时，误差很大，发现每次采集的图像灰度都不一样。模板匹配时转换成8位图像进行处理。
+// 2015-06-25 Binggoo 1.加入图像处理菜单。
+//                    2.记录偏好设置。
+// 2015-06-26 Binggoo 1.加入自动增强处理。
+//                    2.不建立项目采集的图像也加入数据库。
 
 
 #include "stdafx.h"
@@ -140,6 +145,10 @@ ON_UPDATE_COMMAND_UI(ID_SETTING_INSPECT_LEVEL, &CCOXRayView::OnUpdateSettingInsp
 ON_COMMAND(ID_SETTING_INSPECT_LEVEL, &CCOXRayView::OnSettingInspectLevel)
 ON_UPDATE_COMMAND_UI(ID_FILE_DATABASE, &CCOXRayView::OnUpdateFileDatabase)
 ON_COMMAND(ID_FILE_DATABASE, &CCOXRayView::OnFileDatabase)
+ON_UPDATE_COMMAND_UI(ID_THRESHOLD, &CCOXRayView::OnUpdateThreshold)
+ON_COMMAND(ID_THRESHOLD, &CCOXRayView::OnThreshold)
+ON_UPDATE_COMMAND_UI(ID_PROJECT_RECORD, &CCOXRayView::OnUpdateProjectRecord)
+ON_COMMAND(ID_PROJECT_RECORD, &CCOXRayView::OnProjectRecord)
 END_MESSAGE_MAP()
 
 // CCOXRayView 构造/析构
@@ -276,7 +285,9 @@ void CCOXRayView::OnInitialUpdate()
 	double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
 	double angle = atan(dbGamma);
 
-	
+	BOOL bAutoProcess = m_Ini.GetBool(_T("ImageProcess"),_T("En_Auto"),FALSE);
+
+	m_pRightDialogBar->m_PageImgCapture.m_CheckAutoProcess.SetCheck(bAutoProcess);
 	m_pRightDialogBar->m_PageImgProcess.m_SliderGamma.SetPos((int)DEGREE(angle));
 	m_pRightDialogBar->m_PageImgProcess.m_Gamma.SetGamma(dbGamma);
 
@@ -1426,102 +1437,6 @@ void CCOXRayView::OnBtnContCap()
 			dbCurmA = m_Ini.GetDouble(_T("LightSetting"),_T("Current"),0.0);
 		}
 
-		/*
-		// 保存图像
-		CTime time = CTime::GetCurrentTime();
-		if (!m_Ini.GetBool(_T("SaveSetting"),_T("En_NoRemind"),FALSE))
-		{
-			// 弹出保存图片设置窗口
-			CSaveSettingDlg dlg;
-			dlg.SetConfig(&m_Ini);
-
-			dlg.SetTime(time);
-
-			dlg.DoModal();
-		}
-
-		CString strPN,strFileName,strSavePath;
-		m_pRightDialogBar->m_PageImgCapture.m_EditPN.GetWindowText(strPN);
-		m_pRightDialogBar->m_PageImgCapture.m_EditSavePath.GetWindowText(strSavePath);
-
-		if (!PathFileExists(strSavePath))
-		{
-			SHCreateDirectory(NULL,strSavePath);
-		}
-
-		strSavePath.TrimRight(_T("\\"));
-		strFileName.Format(_T("%s\\%s"),strSavePath,strPN);
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Date"),TRUE))
-		{
-			strFileName += time.Format(_T("_%Y-%m-%d"));
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Time"),TRUE))
-		{
-			strFileName += time.Format(_T("_%H%M%S"));
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Voltage"),FALSE))
-		{
-			CString strVol;
-			strVol.Format(_T("_%.1fKV"),dbVolKV);
-
-			strFileName += strVol;
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Current"),FALSE))
-		{
-			CString strCurrent;
-			strCurrent.Format(_T("_%.2fmA"),dbCurmA);
-
-			strFileName += strCurrent;
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Customer"),FALSE))
-		{
-			strFileName += _T("_") + m_Ini.GetString(_T("SaveSetting"),_T("Customer"));
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Spec"),FALSE))
-		{
-			strFileName += _T("_") + m_Ini.GetString(_T("SaveSetting"),_T("ProductSpec"));
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Department"),FALSE))
-		{
-			strFileName += _T("_") + m_Ini.GetString(_T("SaveSetting"),_T("Department"));
-		}
-
-		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_WorkerNumber"),FALSE))
-		{
-			strFileName += _T("_") + m_Ini.GetString(_T("SaveSetting"),_T("WorkerNumber"));
-		}
-
-		strFileName += _T(".avi");
-
-		USES_CONVERSION;
-		char *filename = W2A(strFileName);
-
-		if (m_VideoWriter.isOpened())
-		{
-			m_VideoWriter.release();
-		}
-
-		// CV_FOURCC('P','I','M','1')  --- MPEG-1 codec
-		// CV_FOURCC('M','J','G','P')  --- motion-jpeg codec
-		// CV_FOURCC('M','P','4','2')  --- MPEG-4.2 codec
-		// CV_FOURCC('D','I','V','3')  --- MPEG-4.3 codec
-		// CV_FOURCC('D','I','V','X')  --- MPEG-4 codec
-		// CV_FOURCC('U','2','6','3')  --- H263 codec
-		// CV_FOURCC('I','2','6','3')  --- H263I codec
-		// CV_FOURCC('F','L','V','1')  --- FLV1 codec
-		if (!m_VideoWriter.open(filename,CV_FOURCC('m','s','v','c'),15,cv::Size(512,512)))
-		{
-			AfxMessageBox(_T("录制视频失败！！！"));
-			return;
-		}
-		*/
-
 		if (m_LightControl.IsOpen())
 		{
 			m_pRightDialogBar->m_meterVol.UpdateNeedle(dbVolKV);
@@ -1532,25 +1447,6 @@ void CCOXRayView::OnBtnContCap()
 
 			Sleep(100);
 		}
-
-		/*
-		if (m_bDatabaseConnected)
-		{
-			// 插入数据库
-			IMG_INFO imgInfo;
-			imgInfo.strLocation.Format(_T("POS%d"),0);
-			imgInfo.time = time;
-			imgInfo.dbVolKV = m_Ini.GetDouble(_T("LightSetting"),_T("Voltage"),0.0);
-			imgInfo.dbCurrentMA = m_Ini.GetDouble(_T("LightSetting"),_T("Current"),0.0);
-			imgInfo.strCustomer = m_Ini.GetString(_T("SaveSetting"),_T("Customer"));
-			imgInfo.strProductSpec = m_Ini.GetString(_T("SaveSetting"),_T("ProductSpec"));
-			imgInfo.strDepartment = m_Ini.GetString(_T("SaveSetting"),_T("Department"));
-			imgInfo.strWorkerName = m_Ini.GetString(_T("SaveSetting"),_T("WorkerNumber"));
-			imgInfo.strOrignalPath = strFileName;
-
-			m_nCurrentId = m_MyDatabase.InsertData(&imgInfo);
-		}
-		*/
 
 		m_Stopwatch.Start();
 
@@ -1718,20 +1614,91 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 	HImage Image = HImage(pAcqData->pData,pAcqData->nColumns,pAcqData->nRows,"uint2");
 
-	// 右转90度
-	Image = Image.RotateImage(270,"constant");
-	double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
+	// 转换为8位3通道
+//	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
 
-	if (dbGamma != 1.0)
+	// 右转90度
+//	Image = Image.RotateImage(270,"constant");
+
+	BOOL bAutoProcess = m_pRightDialogBar->m_PageImgCapture.m_CheckAutoProcess.GetCheck();
+
+	m_Ini.WriteBool(_T("ImageProcess"),_T("En_Auto"),bAutoProcess);
+
+	if (bAutoProcess)
 	{
 		pDoc->SetImage(Image,FALSE);
-		HImage hGammaImage = GammaImage(Image,dbGamma);
-		pDoc->SetImage(hGammaImage,TRUE,FALSE);
+
+		// 获取自动处理参数
+		double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
+		long maskWidth = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
+		long maskHeight = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
+		double dbFactor = m_Ini.GetDouble(_T("Enhance"),_T("Factor"),1.0);
+		int times = m_Ini.GetInt(_T("Enhance"),_T("Times"),0);
+
+		if (m_ProjectXml.IsWellFormed())
+		{
+			CString strPos;
+			strPos.Format(_T("POS%d"),m_dwCurrentLocation);
+
+			m_ProjectXml.ResetPos();
+			if (m_ProjectXml.FindChildElem(_T("Project")))
+			{
+				m_ProjectXml.IntoElem();
+				if (m_ProjectXml.FindChildElem(strPos))
+				{
+					// 是否已经保存了偏好设置
+					BOOL bRecord = _ttoi(m_ProjectXml.GetChildAttrib(_T("Record")));
+					if (bRecord)
+					{
+						m_ProjectXml.IntoElem();
+						if (m_ProjectXml.FindChildElem(_T("ImageProcess")))
+						{
+							// 进入图像处理节点
+							m_ProjectXml.IntoElem();
+							if (m_ProjectXml.FindChildElem(_T("Gamma")))
+							{
+								dbGamma = _ttof(m_ProjectXml.GetChildAttrib(_T("Factor")));
+							}
+
+							m_ProjectXml.ResetChildPos();
+							if (m_ProjectXml.FindChildElem(_T("Enhance")))
+							{
+								maskWidth = _ttoi(m_ProjectXml.GetChildAttrib(_T("MaskWidth")));
+								maskHeight = _ttoi(m_ProjectXml.GetChildAttrib(_T("MaskHeight")));
+								dbFactor = _ttof(m_ProjectXml.GetChildAttrib(_T("Factor")));
+								times = _ttoi(m_ProjectXml.GetChildAttrib(_T("Times")));
+							}
+
+							m_ProjectXml.OutOfElem();
+						}
+
+						m_ProjectXml.OutOfElem();
+					}				
+				}
+				m_ProjectXml.OutOfElem();
+			}
+	
+		}
+
+		// 自动处理
+		if (dbGamma != 1.0)
+		{
+			Image = GammaImage(Image,dbGamma);
+		}
+
+		for (int i = 0; i < times; i++)
+		{
+			Image = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
+		}
+
+		pDoc->SetImage(Image,TRUE,FALSE);
+
 	}
 	else
 	{
 		pDoc->SetImage(Image);
 	}
+
 
 	m_Stopwatch.Stop();
 
@@ -1749,6 +1716,15 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 		IMG_INFO imgInfo;
 		imgInfo.strPos = strPos;
+
+		CTime time = CTime::GetCurrentTime();
+
+		imgInfo.time = time;
+		imgInfo.strDepartment = m_Ini.GetString(_T("SaveSetting"),_T("Department"));
+
+		imgInfo.strWorkerName = m_Ini.GetString(_T("SaveSetting"),_T("WorkerNumber"));
+		imgInfo.dbVolKV = m_Ini.GetDouble(_T("LightSetting"),_T("Voltage"),0.0);
+		imgInfo.dbCurrentMA = m_Ini.GetDouble(_T("LightSetting"),_T("Current"),0.0);
 		
 		if (m_ProjectXml.IsWellFormed())
 		{
@@ -1858,91 +1834,95 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 				m_ProjectXml.OutOfElem();
 			}
+		}
 
+		if (!m_Ini.GetBool(_T("SaveSetting"),_T("En_NoRemind"),FALSE))
+		{
+			// 弹出保存图片设置窗口
+			CSaveSettingDlg dlg;
+			dlg.SetConfig(&m_Ini);
 
-			CTime time = CTime::GetCurrentTime();
+			dlg.SetImgInfo(imgInfo);
 
-			imgInfo.time = time;
-			imgInfo.strDepartment = m_Ini.GetString(_T("SaveSetting"),_T("Department"));
+			dlg.DoModal();
+		}
 
-			if (!m_Ini.GetBool(_T("SaveSetting"),_T("En_NoRemind"),FALSE))
-			{
-				// 弹出保存图片设置窗口
-				CSaveSettingDlg dlg;
-				dlg.SetConfig(&m_Ini);
+		CString strSavePath,strFileName;
 
-				dlg.SetImgInfo(imgInfo);
-
-				dlg.DoModal();
-			}
-
-			CString strSavePath,strFileName;
+		if (imgInfo.strProjectName.IsEmpty())
+		{
+			strSavePath.Format(_T("%s\\data\\%s")
+				,m_strAppPath,m_Pos1Time.Format(_T("%Y%m%d%H%M%S")));
+		}
+		else
+		{
 			strSavePath.Format(_T("%s\\data\\%s\\%s")
 				,m_strAppPath,imgInfo.strProjectName,m_Pos1Time.Format(_T("%Y%m%d%H%M%S")));
-			if (!PathFileExists(strSavePath))
-			{
-				SHCreateDirectory(NULL,strSavePath);
-			}
+		}
+		
+		if (!PathFileExists(strSavePath))
+		{
+			SHCreateDirectory(NULL,strSavePath);
+		}
 
 
-			//PRODUCT_CUSTOMER_POS_KV_MA_DATE_TIME
-			strFileName.Format(_T("%s\\"),strSavePath);
+		//PRODUCT_CUSTOMER_POS_KV_MA_DATE_TIME
+		strFileName.Format(_T("%s\\"),strSavePath);
 
-			if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Product"),FALSE))
-			{
-				strFileName += imgInfo.strProductName + _T("_");
-			}
+		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Product"),FALSE))
+		{
+			strFileName += imgInfo.strProductName + _T("_");
+		}
 
-			if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Customer"),FALSE))
-			{
-				strFileName += imgInfo.strCustomer + _T("_");
-			}
+		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Customer"),FALSE))
+		{
+			strFileName += imgInfo.strCustomer + _T("_");
+		}
 
-			if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Pos"),TRUE))
-			{
-				strFileName += strPos + _T("_");
-			}
+		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Pos"),TRUE))
+		{
+			strFileName += strPos + _T("_");
+		}
 
-			if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Voltage"),TRUE))
-			{
-				CString strVol;
-				strVol.Format(_T("%.1fKV_"),imgInfo.dbVolKV);
+		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Voltage"),TRUE))
+		{
+			CString strVol;
+			strVol.Format(_T("%.1fKV_"),imgInfo.dbVolKV);
 
-				strFileName += strVol;
-			}
+			strFileName += strVol;
+		}
 
-			if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Current"),TRUE))
-			{
-				CString strCurrent;
-				strCurrent.Format(_T("%.2fmA_"),imgInfo.dbCurrentMA);
+		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Current"),TRUE))
+		{
+			CString strCurrent;
+			strCurrent.Format(_T("%.2fmA_"),imgInfo.dbCurrentMA);
 
-				strFileName += strCurrent;
-			}
+			strFileName += strCurrent;
+		}
 
-			strFileName += time.Format(_T("%Y%m%d_%H%M%S"));	
-			strFileName += _T(".tif");
+		strFileName += time.Format(_T("%Y%m%d_%H%M%S"));	
+		strFileName += _T(".tif");
 
-			imgInfo.strOrignalPath = strFileName;
+		imgInfo.strOrignalPath = strFileName;
 
-			pDoc->DoSave(strFileName);
+		pDoc->DoSave(strFileName);
 
-			m_pBottomDialogBar->DrawThumbnail(strSavePath,_T("*.tif"));
+		m_pBottomDialogBar->DrawThumbnail(strSavePath,_T("*.tif"));
 
-			if (m_nInpectMode != MANUL_MODE)
-			{
-				OnBtnCheck();
-			}
+		if (m_nInpectMode != MANUL_MODE)
+		{
+			OnBtnCheck();
+		}
 
-			if (m_bDatabaseConnected)
-			{
-				// 插入数据库
-				m_nCurrentId = m_MyDatabase.InsertData(&imgInfo);
-			}
+		if (m_bDatabaseConnected)
+		{
+			// 插入数据库
+			m_nCurrentId = m_MyDatabase.InsertData(&imgInfo);
 		}
 		
 	}
 
-	if (m_bPLCStarted && m_bPLCConnected)
+	if (m_bPLCStarted && m_bPLCConnected && m_nInpectMode != MANUL_MODE)
 	{
 		//报告PLC采集完成
 		DWORD dwD2100 = CMD_PC_RUNNING | CMD_SCAN_END;
@@ -1967,7 +1947,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 	m_pRightDialogBar->m_PageImgCapture.m_BtnStaticCap.EnableWindow(TRUE);
 	m_pRightDialogBar->m_PageFilterParm.GetDlgItem(IDC_BTN_SNAP)->EnableWindow(TRUE);
-
+	
 	return 0;
 }
 
@@ -1993,16 +1973,6 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 			strText.Format(_T("正在连续采集 - %d"),pAcqData->dwActSecBufferFrame);
 
 			m_pStatusBar->SetPaneText(0,strText);
-
-// 			if (m_VideoWriter.isOpened())
-// 			{
-// 				cv::Mat img(pAcqData->nRows,pAcqData->nColumns,CV_16UC1,pAcqData->pData);
-// 
-// 				cv::Mat frame(img.rows,img.cols,CV_8UC3);
-// 				img.convertTo(frame,frame.type());
-// 
-// 				m_VideoWriter.write(frame);
-// 			}
 			
 		}
 		break;
@@ -2030,15 +2000,85 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 
 	HImage Image = HImage(pAcqData->pData,pAcqData->nColumns,pAcqData->nRows,"uint2");
 
+	// 转换为8位3通道
+//	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
+
 	// 右转90度
-	Image = Image.RotateImage(270,"constant");
+//	Image = Image.RotateImage(270,"constant");
 
-	double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
+	BOOL bAutoProcess = m_pRightDialogBar->m_PageImgCapture.m_CheckAutoProcess.GetCheck();
 
-	if (dbGamma != 1.0)
+	m_Ini.WriteBool(_T("ImageProcess"),_T("En_Auto"),bAutoProcess);
+
+	if (bAutoProcess)
 	{
-		HImage hGammaImage = GammaImage(Image,dbGamma);
-		pDoc->SetImage(hGammaImage);
+		pDoc->SetImage(Image,FALSE);
+
+		// 获取自动处理参数
+		double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
+		long maskWidth = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
+		long maskHeight = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
+		double dbFactor = m_Ini.GetDouble(_T("Enhance"),_T("Factor"),1.0);
+		int times = m_Ini.GetInt(_T("Enhance"),_T("Times"),0);
+
+		if (m_ProjectXml.IsWellFormed())
+		{
+			CString strPos;
+			strPos.Format(_T("POS%d"),m_dwCurrentLocation);
+
+			m_ProjectXml.ResetPos();
+			if (m_ProjectXml.FindChildElem(_T("Project")))
+			{
+				m_ProjectXml.IntoElem();
+				if (m_ProjectXml.FindChildElem(strPos))
+				{
+					// 是否已经保存了偏好设置
+					BOOL bRecord = _ttoi(m_ProjectXml.GetChildAttrib(_T("Record")));
+					if (bRecord)
+					{
+						m_ProjectXml.IntoElem();
+						if (m_ProjectXml.FindChildElem(_T("ImageProcess")))
+						{
+							// 进入图像处理节点
+							m_ProjectXml.IntoElem();
+							if (m_ProjectXml.FindChildElem(_T("Gamma")))
+							{
+								dbGamma = _ttof(m_ProjectXml.GetChildAttrib(_T("Factor")));
+							}
+
+							m_ProjectXml.ResetChildPos();
+							if (m_ProjectXml.FindChildElem(_T("Enhance")))
+							{
+								maskWidth = _ttoi(m_ProjectXml.GetChildAttrib(_T("MaskWidth")));
+								maskHeight = _ttoi(m_ProjectXml.GetChildAttrib(_T("MaskHeight")));
+								dbFactor = _ttof(m_ProjectXml.GetChildAttrib(_T("Factor")));
+								times = _ttoi(m_ProjectXml.GetChildAttrib(_T("Times")));
+							}
+
+							m_ProjectXml.OutOfElem();
+						}
+
+						m_ProjectXml.OutOfElem();
+					}				
+				}
+				m_ProjectXml.OutOfElem();
+			}
+
+		}
+
+		// 自动处理
+		if (dbGamma != 1.0)
+		{
+			Image = GammaImage(Image,dbGamma);
+		}
+
+		for (int i = 0; i < times; i++)
+		{
+			Image = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
+		}
+
+		pDoc->SetImage(Image,TRUE,FALSE);
+
 	}
 	else
 	{
@@ -2587,7 +2627,7 @@ void CCOXRayView::OnBtnDist()
 		dlg.DoModal();
 	}
 
-	UINT nLineWidth = m_Ini.GetUInt(_T("PenSetting"),_T("LineWidth"),1);
+	UINT nLineWidth = 1;//m_Ini.GetUInt(_T("PenSetting"),_T("LineWidth"),1);
 	COLORREF color = m_Ini.GetUInt(_T("PenSetting"),_T("Color"),RGB(255,0,0));
 	UINT nFontSize = m_Ini.GetUInt(_T("PenSetting"),_T("FontSize"),20);
 
@@ -3037,7 +3077,7 @@ void CCOXRayView::OnSettingCalibration()
 	int nType = m_nOptionType;
 	SetOptionType(OP_CALIB);
 
-	UINT nLineWidth = m_Ini.GetUInt(_T("PenSetting"),_T("LineWidth"),1);
+	UINT nLineWidth = 1;//m_Ini.GetUInt(_T("PenSetting"),_T("LineWidth"),1);
 	COLORREF color = m_Ini.GetUInt(_T("PenSetting"),_T("Color"),RGB(255,0,0));
 	UINT nFontSize = m_Ini.GetUInt(_T("PenSetting"),_T("FontSize"),20);
 
@@ -3136,6 +3176,8 @@ void CCOXRayView::OnBtnSave()
 		return;
 	}
 
+	CListDrawInfo *pListDraw = pDoc->GetDrawList();
+
 	// 保存图像
 	CTime time = CTime::GetCurrentTime();
 
@@ -3152,16 +3194,50 @@ void CCOXRayView::OnBtnSave()
 
 	strSavePath.TrimRight(_T("\\"));
 
-	strFileName.Format(_T("%s\\%s_%s"),strSavePath,strPN,time.Format(_T("%Y%m%d_%H%M%S")));
+	strFileName.Format(_T("%s\\%s_POS%d_%s"),strSavePath,strPN,m_dwCurrentLocation,time.Format(_T("%Y%m%d_%H%M%S")));
 
 	strFileName += _T(".png");
 
 	USES_CONVERSION;
 	char *file = W2A(strFileName);
 
-	m_pHWindow->DumpWindow("png",file);
+	if (pListDraw != NULL)
+	{
+		if (pListDraw->GetCount() > 0)
+		{
+			m_pHWindow->DumpWindow("png",file);
+		}
+		else
+		{
+			pDoc->OnSaveDocument(strFileName);
+		}
+	}
+	else
+	{
+		pDoc->OnSaveDocument(strFileName);
+	}
 
 	AfxMessageBox(_T("保存图片成功!"));
+
+	if (m_bPLCStarted && m_bPLCConnected && m_nInpectMode == MANUL_MODE)
+	{
+		//报告PLC采集完成
+		DWORD dwD2100 = CMD_PC_RUNNING | CMD_SCAN_END;
+		if (!m_PLCommand.WritePLCD(D2100,1,&dwD2100))
+		{
+			CString strMsg;
+			if (m_PLCommand.m_ErrorType == Error_System)
+			{
+				strMsg.Format(_T("写PLC失败，%s"),CUtils::GetErrorMsg(m_PLCommand.m_dwLastError));
+			}
+			else
+			{
+				strMsg.Format(_T("写PLC返回错误，错误代码0x%04X"),m_PLCommand.m_dwLastError);
+			}
+
+			AfxMessageBox(strMsg);
+		}
+	}
 }
 
 
@@ -3287,10 +3363,10 @@ void CCOXRayView::OnBtnCheck()
 
 	HImage hImageDst = pImage->CopyImage();
 	//16 位转换为8位
-// 	if (GetImageBits(hImageDst) == 16)
-// 	{
-// 		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-// 	}
+	if (GetImageBits(hImageDst) == 16)
+	{
+		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+	}
 
 	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0;
 	int nMinGray = 0,nMaxGray = 0,nOffsetGray = 0;
@@ -3364,10 +3440,10 @@ void CCOXRayView::OnBtnCheck()
 
 				hImageModel = HImage::ReadImage(file);
 
-// 				if (GetImageBits(hImageModel) == 16)
-// 				{
-// 					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
-// 				}
+				if (GetImageBits(hImageModel) == 16)
+				{
+					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
+				}
 
 				m_ProjectXml.OutOfElem();
 			}
@@ -3485,13 +3561,13 @@ void CCOXRayView::OnBtnCheck()
 				hDarkRegions = hDarkRegions.Connection();
 				hLightRegions = hLightRegions.Connection();
 
-				HTuple htArea,htRow,htColumn;
+				HTuple htRadius,htRow,htColumn;
 				HRegionArray hRegions = hDarkRegions.Append(hLightRegions);
 
-				htArea = hRegions.AreaCenter(&htRow,&htColumn);
+				//htRadius = hRegions.AreaCenter(&htRow,&htColumn);
+				htRow = hRegions.SmallestCircle(&htColumn,&htRadius);
 
-
-				if (htArea.Num() == 0)
+				if (htRadius.Num() == 0)
 				{
 					DisplayMessage(m_pHWindow,"PASS",20,12,12,"green",TRUE);
 				}
@@ -3502,7 +3578,7 @@ void CCOXRayView::OnBtnCheck()
 
 					int nInspectLevel = 1,nActualLevel = 1;
 
-					nActualLevel = AdjustDefectLevel(&m_ProjectXml,htArea,hUnionRegion,dbZoomScale,dbPerPixel,&nInspectLevel);
+					nActualLevel = AdjustDefectLevel(&m_ProjectXml,htRadius,hUnionRegion,dbZoomScale,dbPerPixel,&nInspectLevel);
 
 					CString strText;
 					BOOL bPass = FALSE;
@@ -3864,12 +3940,12 @@ void CCOXRayView::LightWatchDog()
 	
 		if (!m_LightControl.IsWatchDogOK())
 		{
-			if (m_LightControl.IsLightOn())
-			{
-				m_LightControl.CloseLight();
-			}
-
-			m_LightControl.Close();
+// 			if (m_LightControl.IsLightOn())
+// 			{
+// 				m_LightControl.CloseLight();
+// 			}
+// 
+// 			m_LightControl.Close();
 
 			if (m_pRightDialogBar->m_LedStat.m_hWnd)
 			{
@@ -3881,13 +3957,18 @@ void CCOXRayView::LightWatchDog()
 				m_pRightDialogBar->m_LedOnOff.SetLedState(0);
 			}
 
-			if (m_hWnd)
-			{
-				AfxMessageBox(_T("光源断开连接，请检查并重新连接！"));
-			}
+// 			if (m_hWnd)
+// 			{
+// 				AfxMessageBox(_T("光源断开连接，请检查并重新连接！"));
+// 			}
 			
-			break;
+//			break;
 		}
+		else
+		{
+			m_pRightDialogBar->m_LedStat.SetLedState(1);
+		}
+		
 
 		if (m_LightControl.IsLightOn())
 		{
@@ -4344,7 +4425,7 @@ void CCOXRayView::OnFileDatabase()
 	dlg.DoModal();
 }
 
-int CCOXRayView::AdjustDefectLevel( CMarkup *pXml,HTuple htAreas,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel)
+int CCOXRayView::AdjustDefectLevel( CMarkup *pXml,HTuple htRadius,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel)
 {
 	int level = 1;
 
@@ -4384,18 +4465,21 @@ int CCOXRayView::AdjustDefectLevel( CMarkup *pXml,HTuple htAreas,HRegion hRegion
 				}
 
 				// 先判断单个缺陷
-				for (int count = 0; count < htAreas.Num();count++)
-				{
-					double area = htAreas[count].D();
+				
+				double diameter = htRadius.Max()[0].D();
 
-					for (int i = level; i < MAX_LEVEL;i++)
+				for (int i = level; i < MAX_LEVEL;i++)
+				{
+					if (diameter > dbSingle[i])
 					{
-						if (area > dbSingle[i])
-						{
-							level = i + 1;
-						}
+						level = i + 1;
+					}
+					else
+					{
+						break;
 					}
 				}
+				
 
 				if (level < MAX_LEVEL)
 				{
@@ -4443,4 +4527,84 @@ int CCOXRayView::AdjustDefectLevel( CMarkup *pXml,HTuple htAreas,HRegion hRegion
 	}
 
 	return level;
+}
+
+
+void CCOXRayView::OnUpdateThreshold(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	CCOXRayDoc *pDoc = GetDocument();
+
+	pCmdUI->Enable(pDoc != NULL || pDoc->GetImage() != NULL);
+}
+
+
+void CCOXRayView::OnThreshold()
+{
+	// TODO: 在此添加命令处理程序代码
+	OnBtnThreshold();
+}
+
+
+void CCOXRayView::OnUpdateProjectRecord(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_ProjectXml.IsWellFormed());
+}
+
+
+void CCOXRayView::OnProjectRecord()
+{
+	// TODO: 在此添加命令处理程序代码
+	CString strPos;
+	strPos.Format(_T("POS%d"),m_dwCurrentLocation);
+
+	m_ProjectXml.ResetPos();
+	if (m_ProjectXml.FindChildElem(_T("Project")))
+	{
+		m_ProjectXml.IntoElem();
+		if (m_ProjectXml.FindChildElem(strPos))
+		{
+			m_ProjectXml.SetChildAttrib(_T("Record"),1);
+
+			m_ProjectXml.IntoElem();
+			if (!m_ProjectXml.FindChildElem(_T("ImageProcess")))
+			{
+				m_ProjectXml.AddChildElem(_T("ImageProcess"));
+			}
+
+			// 进入图像处理节点
+			m_ProjectXml.IntoElem();
+			if (!m_ProjectXml.FindChildElem(_T("Gamma")))
+			{
+				m_ProjectXml.AddChildElem(_T("Gamma"));
+			}
+
+			double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
+			m_ProjectXml.SetChildAttrib(_T("Factor"),dbGamma);
+
+			m_ProjectXml.ResetChildPos();
+			if (!m_ProjectXml.FindChildElem(_T("Enhance")))
+			{
+				m_ProjectXml.AddChildElem(_T("Enhance"));
+			}
+			
+			int maskWidth = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
+			int maskHeight = m_Ini.GetInt(_T("Enhance"),_T("MaskHeight"),7);
+			double dbFactor = m_Ini.GetDouble(_T("Enhance"),_T("Factor"),1.0);
+			int times = m_Ini.GetInt(_T("Enhance"),_T("Times"),0);
+
+			m_ProjectXml.SetChildAttrib(_T("MaskWidth"),maskWidth);
+			m_ProjectXml.SetChildAttrib(_T("MaskHeight"),maskHeight);
+			m_ProjectXml.SetChildAttrib(_T("Factor"),dbFactor);
+			m_ProjectXml.SetChildAttrib(_T("Times"),times);
+
+			m_ProjectXml.Save();
+
+			m_ProjectXml.OutOfElem();
+
+			m_ProjectXml.OutOfElem();
+		}
+		m_ProjectXml.OutOfElem();
+	}
 }

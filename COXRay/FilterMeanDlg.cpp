@@ -13,9 +13,12 @@ IMPLEMENT_DYNAMIC(CFilterMeanDlg, CDialogEx)
 
 CFilterMeanDlg::CFilterMeanDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CFilterMeanDlg::IDD, pParent)
+	, m_bCheckNoRemind(FALSE)
 {
 	m_lMaskWidth = 9;
 	m_lMaskHeight = 9;
+	
+	m_pIni = NULL;
 }
 
 CFilterMeanDlg::~CFilterMeanDlg()
@@ -27,6 +30,7 @@ void CFilterMeanDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_WIDTH, m_ComboBoxWidth);
 	DDX_Control(pDX, IDC_COMBO_HEIGHT, m_ComboBoxHeight);
+	DDX_Check(pDX, IDC_CHECK_NO_REMIND, m_bCheckNoRemind);
 }
 
 
@@ -43,6 +47,16 @@ BOOL CFilterMeanDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
+	ASSERT(m_pIni);
+
+	m_lMaskHeight = m_pIni->GetInt(_T("MeanFilter"),_T("MaskHeight"),9);
+	m_lMaskWidth = m_pIni->GetInt(_T("MeanFilter"),_T("MaskWidth"),9);
+	m_bCheckNoRemind = m_pIni->GetBool(_T("MeanFilter"),_T("En_NoRemind"),FALSE);
+
+	CString strHeight,strWidth;
+	strHeight.Format(_T("%d"),m_lMaskHeight);
+	strWidth.Format(_T("%d"),m_lMaskWidth);
+
 	m_ComboBoxWidth.AddString(_T("3"));
 	m_ComboBoxWidth.AddString(_T("5"));
 	m_ComboBoxWidth.AddString(_T("7"));
@@ -68,8 +82,12 @@ BOOL CFilterMeanDlg::OnInitDialog()
 	m_ComboBoxHeight.AddString(_T("101"));
 
 
-	m_ComboBoxWidth.SetCurSel(3);
-	m_ComboBoxHeight.SetCurSel(3);
+// 	m_ComboBoxWidth.SetCurSel(3);
+// 	m_ComboBoxHeight.SetCurSel(3);
+	m_ComboBoxWidth.SetWindowText(strWidth);
+	m_ComboBoxHeight.SetWindowText(strHeight);
+
+	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
@@ -79,6 +97,8 @@ BOOL CFilterMeanDlg::OnInitDialog()
 void CFilterMeanDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+
 	CString strWidth,strHeight;
 	m_ComboBoxWidth.GetWindowText(strWidth);
 	m_ComboBoxHeight.GetWindowText(strHeight);
@@ -91,6 +111,10 @@ void CFilterMeanDlg::OnBnClickedOk()
 		AfxMessageBox(_T("必须大于0"));
 		return;
 	}
+
+	m_pIni->WriteInt(_T("MeanFilter"),_T("MaskHeight"),m_lMaskHeight);
+	m_pIni->WriteInt(_T("MeanFilter"),_T("MaskWidth"),m_lMaskWidth);
+	m_pIni->WriteBool(_T("MeanFilter"),_T("En_NoRemind"),m_bCheckNoRemind);
 
 	CDialogEx::OnOK();
 }

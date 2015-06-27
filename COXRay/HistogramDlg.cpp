@@ -240,10 +240,10 @@ void CHistogramDlg::Refresh()
 	//16 位转换为8位
 	HImage hImageDst = pImage->CopyImage();
 
-// 	if (GetImageBits(hImageDst) == 16)
-// 	{
-// 		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-// 	}
+	if (GetImageBits(hImageDst) == 16)
+	{
+		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+	}
 
 	double dbZoomFactor = pDoc->GetZoomFactor();
 	HImage hScaleImage = hImageDst.ZoomImageFactor(dbZoomFactor,dbZoomFactor,"constant");
@@ -298,10 +298,10 @@ void CHistogramDlg::SetRegion( HRegion region )
 	//16 位转换为8位
 	HImage hImageDst = pImage->CopyImage();
 
-// 	if (GetImageBits(hImageDst) == 16)
-// 	{
-// 		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-// 	}
+	if (GetImageBits(hImageDst) == 16)
+	{
+		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+	}
 
 	double dbZoomScale = pDoc->GetZoomFactor();
 	HImage hScaleImage = hImageDst.ZoomImageFactor(dbZoomScale,dbZoomScale,"constant");

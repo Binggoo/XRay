@@ -14,7 +14,6 @@ IMPLEMENT_DYNAMIC(CPageImgCapture, CDialogEx)
 CPageImgCapture::CPageImgCapture(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CPageImgCapture::IDD, pParent)
 {
-
 }
 
 CPageImgCapture::~CPageImgCapture()
@@ -29,6 +28,7 @@ void CPageImgCapture::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_SAVE_PATH, m_EditSavePath);
 	DDX_Control(pDX, IDC_EDIT_PN, m_EditPN);
 	DDX_Control(pDX,IDC_COMBO_POS_NUMBER,m_ComboBoxPosNum);
+	DDX_Control(pDX,IDC_CHECK_AUTO_PROCESS,m_CheckAutoProcess);
 }
 
 
@@ -224,9 +224,16 @@ LRESULT CPageImgCapture::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_COMMAND:
-		if (LOWORD(wParam) != IDC_COMBO_CTL_MODE)
 		{
-			return ::SendMessage(GetParent()->GetParent()->GetSafeHwnd(),message,wParam,lParam);
+			switch LOWORD(wParam)
+			{
+			case IDC_COMBO_CTL_MODE:
+				break;
+
+			default:
+				return ::SendMessage(GetParent()->GetParent()->GetSafeHwnd(),message,wParam,lParam);
+			}
+			
 		}
 		break;
 	}

@@ -559,6 +559,14 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 
 	double dbZoomScale = pDoc->GetZoomFactor();
 
+	HImage hDstImage = pImage->CopyImage();
+
+	// 16位转换为8位
+	if (GetImageBits(hDstImage) == 16)
+	{
+		hDstImage = ConvertImage(hDstImage,IPL_DEPTH_8U,3);
+	}
+
 	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0,dbRowTrans = 0.0,dbColumnTrans = 0.0;
 
 	m_pXml->ResetPos();
@@ -642,7 +650,7 @@ void CPageFilterParm::OnBnClickedBtnViewArea()
 				,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
 
 			HTuple htRow,htColumn,htAngle,htScore,htScale;
-			htRow = hShapModel.FindShapeModel(*pImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
+			htRow = hShapModel.FindShapeModel(hDstImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
 
 			DisplayShapMatchingResult(pHWindow,hShapModel,"green",htRow,htColumn,htAngle,1,1,dbZoomScale);
 
@@ -875,10 +883,10 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 	HImage hImageDst = pImage->CopyImage();
 
 	//16 位转换为8位
-// 	if (GetImageBits(hImageDst) == 16)
-// 	{
-// 		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-// 	}
+	if (GetImageBits(hImageDst) == 16)
+	{
+		hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+	}
 
 	double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0;
 	int nMinGray = 0,nMaxGray = 0,nOffsetGray = 0;
@@ -952,10 +960,10 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 
 				hImageModel = HImage::ReadImage(file);
 
-// 				if (GetImageBits(hImageModel) == 16)
-// 				{
-// 					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
-// 				}
+				if (GetImageBits(hImageModel) == 16)
+				{
+					hImageModel = ConvertImage(hImageModel,IPL_DEPTH_8U,3);
+				}
 
 				m_pXml->OutOfElem();
 			}
@@ -1011,7 +1019,7 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 				,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
 
 			HTuple htRow,htColumn,htAngle,htScore,htScale;
-			htRow = hShapModel.FindShapeModel(*pImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
+			htRow = hShapModel.FindShapeModel(hImageDst,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
 
 			if (htScore.Num() == 1)
 			{
@@ -1076,11 +1084,11 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 
 				HRegionArray hRegions = hDarkRegions.Append(hLightRegions);
 
-				HTuple htArea,htRow,htColumn;
+				// 求缺陷最小外接圆
+				HTuple htRadius,htRow,htColumn;
+				htRow = hRegions.SmallestCircle(&htColumn,&htRadius);
 
-				htArea = hRegions.AreaCenter(&htRow,&htColumn);
-
-				if (htArea.Num() == 0)
+				if (htRadius.Num() == 0)
 				{
 					DisplayMessage(pHWindow,"PASS",20,12,12,"green",TRUE);
 				}
@@ -1093,7 +1101,7 @@ void CPageFilterParm::OnBnClickedBtnInspect()
 					pHWindow->Display(hLightRegions);
 
 					CString strText;
-					strText.Format(_T("缺陷总大小=%.0f %s"),htArea.Sum()[0].D() * dbPerPixel * dbPerPixel,strUnit);
+					strText.Format(_T("最大缺陷直径=%.0f %s"),htRadius.Max()[0].D() * 2 * dbPerPixel,strUnit);
 
 					USES_CONVERSION;
 					char *text = W2A(strText);
@@ -1173,16 +1181,16 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 		HImage hImageDst = pImage->CopyImage();
 
 		//16 位转换为8位
-// 		if (GetImageBits(hImageDst) == 16)
-// 		{
-// 			hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
-// 		}
+		if (GetImageBits(hImageDst) == 16)
+		{
+			hImageDst = ConvertImage(hImageDst,IPL_DEPTH_8U,3);
+		}
 
 		double dbZoomScale = 1 / pDoc->GetZoomFactor();
 
 		HRegion htRegion = m_hRegionLoacte.ZoomRegion(dbZoomScale,dbZoomScale);
 		// 定位
-		HImage hReduceImage = pImage->ReduceDomain(htRegion);
+		HImage hReduceImage = hImageDst.ReduceDomain(htRegion);
 
 		htRegion = hReduceImage.Threshold(wParam,lParam);
 
@@ -1195,7 +1203,7 @@ afx_msg LRESULT CPageFilterParm::OnAddGrayRange(WPARAM wParam, LPARAM lParam)
 			,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
 
 		HTuple htRow,htColumn,htAngle,htScore,htScale;
-		htRow = hShapModel.FindShapeModel(*pImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
+		htRow = hShapModel.FindShapeModel(hImageDst,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
 
 		if (htScore.Num() == 0)
 		{
@@ -1485,6 +1493,14 @@ void CPageFilterParm::OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult)
 
 		double dbZoomScale = pDoc->GetZoomFactor();
 
+		HImage hDstImage = pImage->CopyImage();
+
+		// 16位转换为8位
+		if (GetImageBits(hDstImage) == 16)
+		{
+			hDstImage = ConvertImage(hDstImage,IPL_DEPTH_8U,3);
+		}
+
 		double dbRow = 0.0,dbColumn = 0.0,dbPhi = 0.0,dbLen1 = 0.0,dbLen2 = 0.0,dbRowTrans = 0.0,dbColumnTrans = 0.0;
 
 		m_pXml->ResetPos();
@@ -1568,7 +1584,7 @@ void CPageFilterParm::OnNMClickListAreas(NMHDR *pNMHDR, LRESULT *pResult)
 					,&htScaleMin,&htScaleMax,&htScaleStep,&htMetric,&htMinContrast);
 
 				HTuple htRow,htColumn,htAngle,htScore,htScale;
-				htRow = hShapModel.FindShapeModel(*pImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
+				htRow = hShapModel.FindShapeModel(hDstImage,htAngleStart,htAngleExtent,0.8,1,0,"least_squares",htNumLevels,0.5,&htColumn,&htAngle,&htScore);
 
 				if (htScore.Num() == 1)
 				{

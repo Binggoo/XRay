@@ -25,9 +25,15 @@ private:
 
 	long m_lMaskWidth;
 	long m_lMaskHeight;
+	BOOL m_bCheckNoRemind;
+
+	CIni *m_pIni;
+
 public:
 	virtual BOOL OnInitDialog();
-	long GetMaskWidth() {return m_lMaskWidth;}
-	long GetMaskHeight() {return m_lMaskHeight;}
+	long GetMaskWidth() {return m_lMaskWidth;};
+	long GetMaskHeight() {return m_lMaskHeight;};
 	afx_msg void OnBnClickedOk();
+
+	void SetConfig(CIni *pIni) {m_pIni = pIni;};
 };

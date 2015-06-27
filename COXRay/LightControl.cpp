@@ -126,14 +126,14 @@ bool CLightControl::SendCMD( const char *cmd,char *receive,int &len )
 // 		return false;
 // 	}
 
-	Sleep(10);
+	Sleep(50);
 	
 	char *pRsp = new char[len + 1];
 	memset(pRsp,0,len+1);
 
 	DWORD dwRead = ReadSync(pRsp,len,1000);
 
-	Sleep(10);
+	Sleep(50);
 
 	SetEvent(m_hEvent);
 

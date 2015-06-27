@@ -35,5 +35,7 @@ IMAGEPROCESS_API HImage MeanImage(const HImage &Image,long lMaskWidth,long lMask
 IMAGEPROCESS_API HImage MedianImage(const HImage &Image,int MaskType,long radius);
 // 高斯滤波
 IMAGEPROCESS_API HImage GaussImage(const HImage &Image,long size);
-// 增强
+// 增强边缘
 IMAGEPROCESS_API HImage EmphasizeImage(const HImage &Image,long lMaskWidth,long lMaskHeight,double dbFactor);
+// 增强对比度
+IMAGEPROCESS_API HImage IlluminateImage(const HImage &Image,long lMaskWidth,long lMaskHeight,double dbFactor);

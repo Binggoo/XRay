@@ -25,10 +25,15 @@ private:
 
 	long m_lMaskRadius;
 	int  m_iMaskType;
+	BOOL m_bCheckNoRemind;
+
+	CIni *m_pIni;
 public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOk();
 
 	int GetMaskType() {return m_iMaskType;}
 	long GetMaskRadius() {return m_lMaskRadius;}
+
+	void SetConfig(CIni *pIni) {m_pIni = pIni;};
 };

@@ -118,7 +118,7 @@ public:
 	void LightWatchDog();
 
 	// 判断缺陷等级
-	int AdjustDefectLevel(CMarkup *pXml,HTuple htAreas,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel);
+	int AdjustDefectLevel(CMarkup *pXml,HTuple htRadius,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel);
 
 // 生成的消息映射函数
 protected:
@@ -194,6 +194,10 @@ public:
 	afx_msg void OnSettingInspectLevel();
 	afx_msg void OnUpdateFileDatabase(CCmdUI *pCmdUI);
 	afx_msg void OnFileDatabase();
+	afx_msg void OnUpdateThreshold(CCmdUI *pCmdUI);
+	afx_msg void OnThreshold();
+	afx_msg void OnUpdateProjectRecord(CCmdUI *pCmdUI);
+	afx_msg void OnProjectRecord();
 };
 
 #ifndef _DEBUG  // COXRayView.cpp 中的调试版本

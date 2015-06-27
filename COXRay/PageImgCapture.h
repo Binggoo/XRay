@@ -40,6 +40,8 @@ public:
 	CButtonST m_BtnOpen;
 	CButtonST m_BtnSave;
 
+	CButton m_CheckAutoProcess;
+
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	

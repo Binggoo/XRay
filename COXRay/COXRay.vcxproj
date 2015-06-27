@@ -90,7 +90,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>halconcpp.lib;opencv_core249.lib;opencv_highgui249.lib;libmysql.lib;ImageProcessd.lib;pane.lib</AdditionalDependencies>
+      <AdditionalDependencies>halconcpp.lib;opencv_core249.lib;opencv_highgui249.lib;libmysql.lib;ImageProcess.lib;pane.lib</AdditionalDependencies>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <AdditionalLibraryDirectories>../common/mysql/lib;../imageprocess;../lib/x86sse2-win32;../lib/lib;../xis;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libcpmt.lib</IgnoreSpecificDefaultLibraries>
