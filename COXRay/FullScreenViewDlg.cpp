@@ -54,7 +54,11 @@ BOOL CFullScreenViewDlg::OnInitDialog()
 	}
 	catch (HException &)
 	{
-		return FALSE;
+		AfxMessageBox(_T("图像不存在或格式不正确！"));
+
+		CDialogEx::OnOK();
+
+		return TRUE;
 	}
 
 	double dbScaleWidth = 0.0,dbScaleHeight = 0.0,dbZoomScale;

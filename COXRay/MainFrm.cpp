@@ -105,3 +105,20 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 
 // CMainFrame 消息处理程序
+
+
+BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 在此添加专用代码和/或调用基类
+// 	if (pMsg->message == WM_KEYDOWN)
+// 	{
+// 		if (pMsg->wParam == VK_RETURN)
+// 		{
+// 
+// 			PostMessage(WM_COMMAND,IDC_BTN_STATIC_CAP);
+// 			return TRUE;
+// 		}
+// 	}
+
+	return CFrameWnd::PreTranslateMessage(pMsg);
+}

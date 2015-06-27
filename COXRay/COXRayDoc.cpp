@@ -555,6 +555,9 @@ void CCOXRayDoc::OnBtnRotate()
 	SubmitUndoImage();
 
 	double dbRotateDegree = dlg.GetRotateDegree();
+
+	m_pIni->WriteDouble(_T("ImageProcess"),_T("Rotate"),dbRotateDegree);
+
 	m_Stopwatch.Start();
 	HImage Image = m_pHWorkImage->CopyImage();
 	*m_pHWorkImage = RotateImage(Image,dbRotateDegree);
@@ -914,14 +917,13 @@ void CCOXRayDoc::SetImage( HImage Image,BOOL bUpdateWindow/* = TRUE*/,BOOL bNew 
 		m_pOriginImage = new HImage();
 	}
 
-	*m_pHWorkImage = Image.CopyImage();
-
 	if (bNew)
 	{
 		ClearUndoDraw();
 		ClearUndoImage();
 		m_UndoType.RemoveAll();
 
+		*m_pHWorkImage = Image.CopyImage();
 		*m_pOriginImage = Image.CopyImage();
 
 		FitWindow(bUpdateWindow);
@@ -929,6 +931,8 @@ void CCOXRayDoc::SetImage( HImage Image,BOOL bUpdateWindow/* = TRUE*/,BOOL bNew 
 	else
 	{
 		SubmitUndoImage();
+
+		*m_pHWorkImage = Image.CopyImage();
 
 		UpdateAllViews(NULL,WM_USER_NEWIMAGE);
 	}

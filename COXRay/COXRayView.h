@@ -98,6 +98,8 @@ protected:
 
 	CHistogramDlg *m_pHistoDlg;
 
+	BOOL m_bWindowOK;
+
 public:
 	void InitAcq();
 
@@ -198,6 +200,7 @@ public:
 	afx_msg void OnThreshold();
 	afx_msg void OnUpdateProjectRecord(CCmdUI *pCmdUI);
 	afx_msg void OnProjectRecord();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 #ifndef _DEBUG  // COXRayView.cpp 中的调试版本

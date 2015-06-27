@@ -20,6 +20,8 @@
 //                    2.记录偏好设置。
 // 2015-06-26 Binggoo 1.加入自动增强处理。
 //                    2.不建立项目采集的图像也加入数据库。
+// 2015-06-27 Binggoo 1.加入Ctrl + Enter采集图像快捷键和Ctrl + A 保存快捷键。
+//                    2.保存的原始图片中也记录PN号。
 
 
 #include "stdafx.h"
@@ -195,6 +197,8 @@ CCOXRayView::CCOXRayView()
 	m_bFilterParmSnap = FALSE;
 
 	m_pHistoDlg = NULL;
+
+	m_bWindowOK = FALSE;
 }
 
 CCOXRayView::~CCOXRayView()
@@ -426,13 +430,15 @@ void CCOXRayView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				
 
 				// 避免屏幕不停刷新
-				if (!m_bGammaPreview && !m_bContinueCapture)
+				if ((!m_bGammaPreview && !m_bContinueCapture) || !m_bWindowOK)
 				{
 					m_pHWindow->ClearWindow();
 
 					// 注意宽和高是反的
 					m_pHWindow->SetWindowExtents(cy,cx,nWidth,nHeight);
 					m_pHWindow->SetPart(0,0,nHeight,nWidth);
+
+					m_bWindowOK = TRUE;
 				}
 
 				m_pHWindow->Display(hImageTemp);
@@ -1614,6 +1620,13 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 	HImage Image = HImage(pAcqData->pData,pAcqData->nColumns,pAcqData->nRows,"uint2");
 
+	double dbDegree = m_Ini.GetDouble(_T("ImageProcess"),_T("Rotate"),0.0);
+
+	if (dbDegree != 0.0)
+	{
+		Image = RotateImage(Image,dbDegree);
+	}
+
 	// 转换为8位3通道
 //	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
 
@@ -1719,6 +1732,10 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 		CTime time = CTime::GetCurrentTime();
 
+		CString strPN;
+		m_pRightDialogBar->m_PageImgCapture.m_EditPN.GetWindowText(strPN);
+
+		imgInfo.strProductName = strPN;
 		imgInfo.time = time;
 		imgInfo.strDepartment = m_Ini.GetString(_T("SaveSetting"),_T("Department"));
 
@@ -1999,6 +2016,13 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 	CCOXRayDoc *pDoc = GetDocument();
 
 	HImage Image = HImage(pAcqData->pData,pAcqData->nColumns,pAcqData->nRows,"uint2");
+
+	double dbDegree = m_Ini.GetDouble(_T("ImageProcess"),_T("Rotate"),0.0);
+
+	if (dbDegree != 0.0)
+	{
+		Image = RotateImage(Image,dbDegree);
+	}
 
 	// 转换为8位3通道
 //	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
@@ -4607,4 +4631,23 @@ void CCOXRayView::OnProjectRecord()
 		}
 		m_ProjectXml.OutOfElem();
 	}
+}
+
+
+BOOL CCOXRayView::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 在此添加专用代码和/或调用基类
+// 	if (pMsg->message == WM_KEYDOWN)
+// 	{
+// 		if (pMsg->wParam == VK_RETURN)
+// 		{
+// 			if (m_bAcqConnected && m_bStopSnap)
+// 			{
+// 				PostMessage(WM_COMMAND,IDC_BTN_STATIC_CAP);
+// 				return TRUE;
+// 			}
+// 		}
+// 	}
+
+	return CScrollView::PreTranslateMessage(pMsg);
 }
