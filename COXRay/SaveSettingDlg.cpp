@@ -23,6 +23,7 @@ CSaveSettingDlg::CSaveSettingDlg(CWnd* pParent /*=NULL*/)
 	, m_dbEditCurrent(0)
 	, m_bCheckProductName(FALSE)
 	, m_bCheckPos(FALSE)
+	, m_bCheckSaveImgEdit(FALSE)
 {
 }
 
@@ -41,6 +42,7 @@ void CSaveSettingDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK_POS, m_bCheckPos);
 	DDX_Check(pDX,IDC_CHECK_NO_TIPS,m_bCheckNoRemind);
 	DDX_Check(pDX,IDC_CHECK_AUTO_SAVE,m_bCheckAutoSave);
+	DDX_Check(pDX,IDC_CHECK_SAVE_IMG_EDIT,m_bCheckSaveImgEdit);
 
 	DDX_Text(pDX,IDC_EDIT_DATE,m_strEditDate);
 	DDX_Text(pDX,IDC_EDIT_VOLTAGE,m_dbEditVoltage);
@@ -75,6 +77,7 @@ BOOL CSaveSettingDlg::OnInitDialog()
 
 	m_bCheckNoRemind = m_pIni->GetBool(_T("SaveSetting"),_T("En_NoRemind"),FALSE);
 	m_bCheckAutoSave = m_pIni->GetBool(_T("SaveSetting"),_T("En_AutoSave"),TRUE);
+	m_bCheckSaveImgEdit = m_pIni->GetBool(_T("SaveSetting"),_T("En_SaveImgEdit"),FALSE);
 
 	UpdateData(FALSE);
 
@@ -95,6 +98,7 @@ void CSaveSettingDlg::OnBnClickedOk()
 	
 	m_pIni->WriteBool(_T("SaveSetting"),_T("En_NoRemind"),m_bCheckNoRemind);
 	m_pIni->WriteBool(_T("SaveSetting"),_T("En_AutoSave"),m_bCheckAutoSave);
+	m_pIni->WriteBool(_T("SaveSetting"),_T("En_SaveImgEdit"),m_bCheckSaveImgEdit);
 
 	CDialogEx::OnOK();
 }

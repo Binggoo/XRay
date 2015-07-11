@@ -22,7 +22,13 @@
 //                    2.不建立项目采集的图像也加入数据库。
 // 2015-06-27 Binggoo 1.加入Ctrl + Enter采集图像快捷键和Ctrl + A 保存快捷键。
 //                    2.保存的原始图片中也记录PN号。
-
+// 2015-07-02 Binggoo 1.加入用户登录、注册、修改密码。
+//                    2.加入序列号编码规则。
+//                    3.数据库中加入序列号，并且处理保存时更新数据库库。
+//                    4.保存图片加入缺陷等级。
+// 2015-07-06 Binggoo 1.保存图片还是改为保存24位图片，16位图片常用软件打开会有偏差。
+// 2015-07-07 Binggoo 1.增加是否保存图像编辑可选项。
+// 2015-07-11 Binggoo 1.加入Line Profile。
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -49,6 +55,11 @@
 #include "ProjectEditDlg.h"
 #include "InspectLevelDlg.h"
 #include "DatabaseDlg.h"
+#include "LoginDlg.h"
+#include "SignInDlg.h"
+#include "CodeRuleDlg.h"
+#include "ModifyPasswordDlg.h"
+#include "LineProfileDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -151,6 +162,16 @@ ON_UPDATE_COMMAND_UI(ID_THRESHOLD, &CCOXRayView::OnUpdateThreshold)
 ON_COMMAND(ID_THRESHOLD, &CCOXRayView::OnThreshold)
 ON_UPDATE_COMMAND_UI(ID_PROJECT_RECORD, &CCOXRayView::OnUpdateProjectRecord)
 ON_COMMAND(ID_PROJECT_RECORD, &CCOXRayView::OnProjectRecord)
+ON_UPDATE_COMMAND_UI(ID_USER_LOGIN, &CCOXRayView::OnUpdateUserLogin)
+ON_COMMAND(ID_USER_LOGIN, &CCOXRayView::OnUserLogin)
+ON_UPDATE_COMMAND_UI(ID_USER_SIGNIN, &CCOXRayView::OnUpdateUserSignin)
+ON_COMMAND(ID_USER_SIGNIN, &CCOXRayView::OnUserSignin)
+ON_UPDATE_COMMAND_UI(ID_USER_MODIFY_PASSWORD, &CCOXRayView::OnUpdateUserModifyPassword)
+ON_COMMAND(ID_USER_MODIFY_PASSWORD, &CCOXRayView::OnUserModifyPassword)
+ON_UPDATE_COMMAND_UI(ID_SETTING_CODE_RULE, &CCOXRayView::OnUpdateSettingCodeRule)
+ON_COMMAND(ID_SETTING_CODE_RULE, &CCOXRayView::OnSettingCodeRule)
+ON_UPDATE_COMMAND_UI(ID_LINE_PROFILE, &CCOXRayView::OnUpdateLineProfile)
+ON_COMMAND(ID_LINE_PROFILE, &CCOXRayView::OnLineProfile)
 END_MESSAGE_MAP()
 
 // CCOXRayView 构造/析构
@@ -264,11 +285,13 @@ void CCOXRayView::OnInitialUpdate()
 
 	if (m_pRightDialogBar == NULL)
 	{
+		((CMainFrame *)AfxGetMainWnd())->SetConfig(&m_Ini);
+
 		m_pRightDialogBar = ((CMainFrame *)AfxGetMainWnd())->GetRightDialogBar();
 
 		if (m_pRightDialogBar)
 		{
-			m_pRightDialogBar->SetConfig(&m_ProjectXml);
+			m_pRightDialogBar->SetConfig(&m_ProjectXml,&m_Ini);
 		}
 	}
 
@@ -869,6 +892,9 @@ int CCOXRayView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (m_bDatabaseConnected)
 	{
 		m_MyDatabase.CreateTable();
+
+		// 添加字段
+		m_MyDatabase.InsertField(_T("serial"),_T("product"));
 	}
 	else
 	{
@@ -888,9 +914,11 @@ void CCOXRayView::OnTimer(UINT_PTR nIDEvent)
 	{
 		m_pRightDialogBar = ((CMainFrame *)AfxGetMainWnd())->GetRightDialogBar();
 
+		((CMainFrame *)AfxGetMainWnd())->SetConfig(&m_Ini);
+
 		if (m_pRightDialogBar)
 		{
-			m_pRightDialogBar->SetConfig(&m_ProjectXml);
+			m_pRightDialogBar->SetConfig(&m_ProjectXml,&m_Ini);
 		}
 	}
 
@@ -960,6 +988,20 @@ void CCOXRayView::OnTimer(UINT_PTR nIDEvent)
 				InitAcq();
 
 				ConnectPLC();
+
+				// 用户登录
+				CLoginDlg dlg(&m_MyDatabase);
+
+				dlg.DoModal();
+
+				m_CurUser = dlg.GetUser();
+
+				CString strUser;
+				strUser.Format(_T("%s  %s"),m_CurUser.strUserName
+					,m_CurUser.nUserType == 0 ? _T("administrator") : _T(""));
+				int nIndex = m_pStatusBar->CommandToIndex(ID_INDICATOR_USER);
+
+				m_pStatusBar->SetPaneText(nIndex,strUser);
 			}
 			else
 			{
@@ -1735,11 +1777,11 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 		CString strPN;
 		m_pRightDialogBar->m_PageImgCapture.m_EditPN.GetWindowText(strPN);
 
-		imgInfo.strProductName = strPN;
+		imgInfo.strSerialNumber = strPN;
 		imgInfo.time = time;
 		imgInfo.strDepartment = m_Ini.GetString(_T("SaveSetting"),_T("Department"));
 
-		imgInfo.strWorkerName = m_Ini.GetString(_T("SaveSetting"),_T("WorkerNumber"));
+		imgInfo.strWorkerName = m_CurUser.strUserName;
 		imgInfo.dbVolKV = m_Ini.GetDouble(_T("LightSetting"),_T("Voltage"),0.0);
 		imgInfo.dbCurrentMA = m_Ini.GetDouble(_T("LightSetting"),_T("Current"),0.0);
 		
@@ -1888,7 +1930,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Product"),FALSE))
 		{
-			strFileName += imgInfo.strProductName + _T("_");
+			strFileName += imgInfo.strSerialNumber + _T("_");
 		}
 
 		if (m_Ini.GetBool(_T("SaveSetting"),_T("En_Customer"),FALSE))
@@ -3206,10 +3248,13 @@ void CCOXRayView::OnBtnSave()
 	CTime time = CTime::GetCurrentTime();
 
 	CString strPN,strFileName,strSavePath;
+	int level = m_pRightDialogBar->m_PageImgCapture.m_ComboBoxLevel.GetCurSel();
 	m_pRightDialogBar->m_PageImgCapture.m_EditPN.GetWindowText(strPN);
 	m_pRightDialogBar->m_PageImgCapture.m_EditSavePath.GetWindowText(strSavePath);
 
 	m_Ini.WriteString(_T("SaveSetting"),_T("SavePath"),strSavePath);
+
+	BOOL bSaveEdit = m_Ini.GetBool(_T("SaveSetting"),_T("En_SaveImgEdit"),FALSE);
 
 	if (!PathFileExists(strSavePath))
 	{
@@ -3218,13 +3263,40 @@ void CCOXRayView::OnBtnSave()
 
 	strSavePath.TrimRight(_T("\\"));
 
-	strFileName.Format(_T("%s\\%s_POS%d_%s"),strSavePath,strPN,m_dwCurrentLocation,time.Format(_T("%Y%m%d_%H%M%S")));
+	strFileName.Format(_T("%s\\%s_POS%d_DL%d_%s"),strSavePath,strPN,m_dwCurrentLocation,level,time.Format(_T("%Y%m%d_%H%M%S")));
 
 	strFileName += _T(".png");
 
-	USES_CONVERSION;
-	char *file = W2A(strFileName);
+	IMG_INFO imgInfo;
+	imgInfo.id = m_nCurrentId;
+	imgInfo.strSerialNumber = strPN;
+	imgInfo.bResult = level == 0 ? TRUE : FALSE;
+	imgInfo.strProcessPath = strFileName;
+	imgInfo.strErrorMsg.Format(_T("DL%d"),level);
 
+	if (m_bDatabaseConnected)
+	{
+		m_MyDatabase.UpdateData(&imgInfo);
+	}
+
+	if (bSaveEdit)
+	{
+		HImage hImage = m_pHWindow->DumpWindowImage();
+		double dbScale = 1 / pDoc->GetZoomFactor();
+		hImage = hImage.ZoomImageFactor(dbScale,dbScale,"constant");
+
+		USES_CONVERSION;
+		char *file = W2A(strFileName);
+		hImage.WriteImage("png",0,file);
+	}
+	else
+	{
+		pDoc->OnSaveDocument(strFileName);
+	}
+
+	
+
+	/*
 	if (pListDraw != NULL)
 	{
 		if (pListDraw->GetCount() > 0)
@@ -3240,6 +3312,7 @@ void CCOXRayView::OnBtnSave()
 	{
 		pDoc->OnSaveDocument(strFileName);
 	}
+	*/
 
 	AfxMessageBox(_T("保存图片成功!"));
 
@@ -4641,13 +4714,175 @@ BOOL CCOXRayView::PreTranslateMessage(MSG* pMsg)
 // 	{
 // 		if (pMsg->wParam == VK_RETURN)
 // 		{
-// 			if (m_bAcqConnected && m_bStopSnap)
-// 			{
-// 				PostMessage(WM_COMMAND,IDC_BTN_STATIC_CAP);
-// 				return TRUE;
-// 			}
+// 			
 // 		}
 // 	}
 
 	return CScrollView::PreTranslateMessage(pMsg);
+}
+
+
+void CCOXRayView::OnUpdateUserLogin(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_bIsLisence);
+}
+
+
+void CCOXRayView::OnUserLogin()
+{
+	// TODO: 在此添加命令处理程序代码
+	CLoginDlg dlg(&m_MyDatabase);
+
+	dlg.DoModal();
+
+	m_CurUser = dlg.GetUser();
+
+	CString strUser;
+	strUser.Format(_T("%s  %s"),m_CurUser.strUserName
+		,m_CurUser.nUserType == 0 ? _T("administrator") : _T(""));
+	int nIndex = m_pStatusBar->CommandToIndex(ID_INDICATOR_USER);
+
+	m_pStatusBar->SetPaneText(nIndex,strUser);
+}
+
+
+void CCOXRayView::OnUpdateUserSignin(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_CurUser.nUserType == 0);
+}
+
+
+void CCOXRayView::OnUserSignin()
+{
+	// TODO: 在此添加命令处理程序代码
+	CSignInDlg dlg(&m_MyDatabase);
+
+	dlg.DoModal();
+}
+
+
+void CCOXRayView::OnUpdateUserModifyPassword(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+}
+
+
+void CCOXRayView::OnUserModifyPassword()
+{
+	// TODO: 在此添加命令处理程序代码
+	CModifyPasswordDlg dlg(&m_MyDatabase);
+	dlg.SetUserName(m_CurUser.strUserName);
+	dlg.DoModal();
+}
+
+
+void CCOXRayView::OnUpdateSettingCodeRule(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(m_CurUser.nUserType == 0);
+}
+
+
+void CCOXRayView::OnSettingCodeRule()
+{
+	// TODO: 在此添加命令处理程序代码
+	CCodeRuleDlg dlg;
+	dlg.SetConfig(&m_Ini);
+
+	dlg.DoModal();
+}
+
+
+void CCOXRayView::OnUpdateLineProfile(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	CCOXRayDoc *pDoc = GetDocument();
+
+	BOOL bEnable = FALSE;
+	if (pDoc)
+	{
+		HImage *pImage = pDoc->GetImage();
+
+		bEnable = pImage != NULL;
+	}
+
+	pCmdUI->Enable(bEnable);
+}
+
+
+void CCOXRayView::OnLineProfile()
+{
+	// TODO: 在此添加命令处理程序代码
+	CCOXRayDoc *pDoc = GetDocument();
+	if (pDoc == NULL)
+	{
+		return;
+	}
+
+	HImage *pImage = pDoc->GetImage();
+	if (pImage == NULL)
+	{
+		return;
+	}
+
+	switch (m_nOptionType)
+	{
+	case OP_LINE:
+	case OP_RECT:
+	case OP_ELLIPSE:
+	case OP_DIST:
+	case OP_DEGREE:
+	case OP_TEXT:
+	case OP_CALIB:
+		return;
+	}
+
+	double dbZoomScale = pDoc->GetZoomFactor();
+
+	int nType = m_nOptionType;
+	SetOptionType(OP_LINE);
+
+	int nLineWidth = 2;//m_Ini.GetUInt(_T("PenSetting"),_T("LineWidth"),1);
+	COLORREF color = RGB(0,255,0);//m_Ini.GetUInt(_T("PenSetting"),_T("Color"),RGB(255,0,0));
+
+	CString strText = _T("按住鼠标左键开始，点鼠标右键完成。");
+
+	m_pStatusBar->SetPaneText(0,strText);
+
+	m_pHWindow->SetLineWidth(nLineWidth);
+	m_pHWindow->SetRgb(GetRValue(color),GetGValue(color),GetBValue(color));
+	HTuple htRow1 = 100,htColumn1 = 100,htRow2,htColumn2;
+
+	try
+	{
+		htRow1 = m_pHWindow->DrawLine(&htColumn1,&htRow2,&htColumn2);
+	}
+	catch (HException &except)
+	{
+		CString strErrorMsg;
+		strErrorMsg.Format(_T("请先点鼠标左键开始，点鼠标右键完成。"));
+
+		AfxMessageBox(strErrorMsg);
+
+		SetOptionType(nType);
+		return;
+	}
+
+	m_pHWindow->DispLine(htRow1,htColumn1,htRow2,htColumn2);
+
+	HRegion hRegion = HRegion::GenRegionLine(htRow1,htColumn1,htRow2,htColumn2);
+
+	hRegion = hRegion.ZoomRegion(1/dbZoomScale,1/dbZoomScale);
+
+	CLineProfileDlg dlg;
+	dlg.SetImageRegion(*pImage,hRegion);
+
+	dlg.DoModal();
+	
+
+	SetOptionType(nType);
+
+	OnUpdate(NULL,WM_USER_NEWIMAGE,NULL);
 }

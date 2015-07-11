@@ -41,7 +41,6 @@ void CProjectNewDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_CUSTOMER, m_ComboBoxCustomer);
 	DDX_Control(pDX, IDC_COMBO_INSPECT_MODE, m_ComboBoxInspectMode);
 	DDX_Control(pDX,IDC_COMBO_INSPECT_POS,m_ComboBoxInspectPos);
-	DDX_Text(pDX,IDC_EDIT_WORKER_NAME,m_strWorkerName);
 }
 
 
@@ -303,7 +302,6 @@ void CProjectNewDlg::OnBnClickedOk()
 	
 	m_pXml->AddChildElem(_T("InspectMode"),m_ComboBoxInspectMode.GetCurSel());
 	m_pXml->AddChildElem(_T("InspectPos"),strPosCount);
-	m_pXml->AddChildElem(_T("WorkerName"),m_strWorkerName);
 
 	for (int i = 0; i < nPosCount; i++)
 	{

@@ -1,6 +1,6 @@
 #pragma once
 #include "afxwin.h"
-
+#include "MyDatabase.h"
 
 // CSaveSettingDlg ¶Ô»°¿ò
 
@@ -28,6 +28,7 @@ private:
 	BOOL m_bCheckPos;
 	BOOL m_bCheckNoRemind;
 	BOOL m_bCheckAutoSave;
+	BOOL m_bCheckSaveImgEdit;
 
 	CString m_strEditDate;
 	double m_dbEditVoltage;

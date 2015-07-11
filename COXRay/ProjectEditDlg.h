@@ -27,7 +27,6 @@ private:
 	int m_nEditWidth;
 	int m_nEditHeight;
 	CComboBox m_ComboBoxCustomer;
-	CComboBox m_ComboBoxWorker;
 	CComboBox m_ComboBoxInspectMode;
 	CComboBox m_ComboBoxPos;
 	CListCtrl m_ListCtrl;

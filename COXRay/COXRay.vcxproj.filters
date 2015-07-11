@@ -235,6 +235,24 @@
     <ClInclude Include="DatabaseDlg.h">
       <Filter>dlg</Filter>
     </ClInclude>
+    <ClInclude Include="CodeRuleDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="ModifyPasswordDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="SignInDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="LineProfile.h">
+      <Filter>ext</Filter>
+    </ClInclude>
+    <ClInclude Include="LineProfileDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="COXRay.cpp">
@@ -380,6 +398,24 @@
     </ClCompile>
     <ClCompile Include="InspectLevelDlg.cpp">
       <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="CodeRuleDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifyPasswordDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="SignInDlg.cpp">
+      <Filter>dlg</Filter>
+    </ClCompile>
+    <ClCompile Include="LineProfile.cpp">
+      <Filter>ext</Filter>
+    </ClCompile>
+    <ClCompile Include="LineProfileDlg.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

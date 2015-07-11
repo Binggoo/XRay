@@ -19,6 +19,7 @@ CRightDialogBar::CRightDialogBar(CWnd* pParent /*=NULL*/)
 	: CDialogBar(/*CRightDialogBar::IDD, pParent*/)
 {
 	m_pXml = NULL;
+	m_pIni = NULL;
 }
 
 CRightDialogBar::~CRightDialogBar()
@@ -227,10 +228,12 @@ void CRightDialogBar::ChangeSize( CWnd *pWnd, int cx,int cy,DWORD flag )
 	}  
 }
 
-void CRightDialogBar::SetConfig( CMarkup *pXml )
+void CRightDialogBar::SetConfig( CMarkup *pXml,CIni *pIni )
 {
 	m_pXml = pXml;
+	m_pIni = pIni;
 	m_PageFilterParm.SetConfig(pXml);
+	m_PageImgCapture.SetConfig(pIni);
 }
 
 void CRightDialogBar::SetLightError( CString strError )

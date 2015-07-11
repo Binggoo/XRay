@@ -21,6 +21,8 @@ public:
 	CStatusBar *GetStatusBar() {return &m_wndStatusBar;}
 	CRightDialogBar *GetRightDialogBar() {return &m_wndRightDialogBar;}
 	CBottomDialogBar *GetBottomDialogBar() {return &m_wndBottomDialogBar;}
+
+	void SetConfig(CIni *pIni) {m_pIni = pIni;};
 // 重写
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -37,6 +39,8 @@ protected:  // 控件条嵌入成员
 	CStatusBar        m_wndStatusBar;
 	CRightDialogBar   m_wndRightDialogBar;
 	CBottomDialogBar  m_wndBottomDialogBar;
+
+	CIni *m_pIni;
 
 // 生成的消息映射函数
 protected:

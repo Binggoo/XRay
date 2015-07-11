@@ -5,7 +5,7 @@
 #include "COXRay.h"
 #include "PageImgCapture.h"
 #include "afxdialogex.h"
-
+#include "CodeRuleDlg.h"
 
 // CPageImgCapture 对话框
 
@@ -14,6 +14,7 @@ IMPLEMENT_DYNAMIC(CPageImgCapture, CDialogEx)
 CPageImgCapture::CPageImgCapture(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CPageImgCapture::IDD, pParent)
 {
+	m_pIni = NULL;
 }
 
 CPageImgCapture::~CPageImgCapture()
@@ -29,12 +30,14 @@ void CPageImgCapture::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_PN, m_EditPN);
 	DDX_Control(pDX,IDC_COMBO_POS_NUMBER,m_ComboBoxPosNum);
 	DDX_Control(pDX,IDC_CHECK_AUTO_PROCESS,m_CheckAutoProcess);
+	DDX_Control(pDX,IDC_COMBO_LEVEL,m_ComboBoxLevel);
 }
 
 
 BEGIN_MESSAGE_MAP(CPageImgCapture, CDialogEx)
 	ON_WM_SIZE()
 	ON_CBN_SELCHANGE(IDC_COMBO_CTL_MODE, &CPageImgCapture::OnCbnSelchangeComboCtlMode)
+	ON_BN_CLICKED(IDC_BTN_CLEAR, &CPageImgCapture::OnBnClickedBtnClear)
 END_MESSAGE_MAP()
 
 
@@ -74,6 +77,16 @@ BOOL CPageImgCapture::OnInitDialog()
 
 	m_ComboBoxPosNum.SetCurSel(0);
 
+	for (int i = 0; i <= MAX_LEVEL;i++)
+	{
+		CString strLevel;
+		strLevel.Format(_T("%d"),i);
+
+		m_ComboBoxLevel.AddString(strLevel);
+	}
+
+	m_ComboBoxLevel.SetCurSel(0);
+
 	m_ComboBoxFrames.AddString(_T("8"));
 	m_ComboBoxFrames.AddString(_T("16"));
 	m_ComboBoxFrames.AddString(_T("32"));
@@ -101,8 +114,8 @@ BOOL CPageImgCapture::OnInitDialog()
 	m_BtnBrowse.SubclassDlgItem(IDC_BTN_BROWSE,this);
 	m_BtnBrowse.SetTooltipText(_T("图像保存路径"));
 
-	m_BtnOpen.SubclassDlgItem(ID_FILE_OPEN,this);
-	m_BtnOpen.SetTooltipText(_T("打开图像"));
+// 	m_BtnOpen.SubclassDlgItem(ID_FILE_OPEN,this);
+// 	m_BtnOpen.SetTooltipText(_T("打开图像"));
 
 	m_BtnSave.SubclassDlgItem(IDC_BTN_SAVE,this);
 	m_BtnSave.SetTooltipText(_T("保存图像"));
@@ -228,6 +241,7 @@ LRESULT CPageImgCapture::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			switch LOWORD(wParam)
 			{
 			case IDC_COMBO_CTL_MODE:
+			case IDC_BTN_CLEAR:
 				break;
 
 			default:
@@ -239,4 +253,43 @@ LRESULT CPageImgCapture::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 	}
 
 	return CDialogEx::WindowProc(message, wParam, lParam);
+}
+
+
+BOOL CPageImgCapture::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 在此添加专用代码和/或调用基类
+	if (pMsg->message == WM_MOUSEWHEEL)
+	{
+		return TRUE;
+	}
+
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RETURN)
+	{
+		if (GetFocus() == GetDlgItem(IDC_EDIT_PN))
+		{
+			CString strPN,strCodeRule;
+			m_EditPN.GetWindowText(strPN);
+
+			if (m_pIni)
+			{
+				strCodeRule = m_pIni->GetString(_T("SaveSetting"),_T("CodeRule"));
+			}
+
+			strPN = CCodeRuleDlg::CodeString(strPN,strCodeRule);
+
+			m_EditPN.SetWindowText(strPN);
+		}
+	}
+	
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+void CPageImgCapture::OnBnClickedBtnClear()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_EditPN.SetWindowText(_T(""));
+
+	m_EditPN.SetFocus();
 }

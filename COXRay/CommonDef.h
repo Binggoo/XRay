@@ -5,6 +5,7 @@ static const char* Mask_Type[] = {"circle","square"};
 static const TCHAR* Units[] = {_T("mm"),_T("cm"),_T("m"),_T("inch")};
 #define UNIT_COUNT 4
 #define MAX_POS    10
+#define MAX_LEVEL  8
 
 #define RAD(x) (PI * x / 180)
 #define DEGREE(x) (180 * x / PI)
@@ -92,57 +93,5 @@ typedef struct _STRUCT_DRAW_INFO
 	double dbPerPixel;
 	UINT nUnitIndex;
 }DrawInfo,*PDrawInfo;
-
-
-/*
-id --- 序号
-project --- 项目名称
-product --- 产品名称
-product_spec --- 产品规格
-customer --- 客户
-department --- 部门或者产线
-woker_name --- 检测员姓名或者工号
-level --- 检测标准
-mode --- 检测模式
-pos --- 拍照位置
-time --- 拍照时间
-voltage --- 管电压
-current --- 管电流
-original_path --- 原始图片路径
-process_path --- 处理后路径
-result --- 检测结果
-error_msg --- 错误描述
-*/
-typedef struct _STRUCT_IMG_INFO
-{
-	int id;
-	CString strProjectName;
-	CString strProductName;
-	CString strProductSpec;
-	CString strCustomer;
-	CString strDepartment;
-	CString strWorkerName;
-	int level;
-	int mode;
-	CString strPos;
-	CTime time;
-	double dbVolKV;
-	double dbCurrentMA;
-	CString strOrignalPath;
-	CString strProcessPath;
-	BOOL bResult;
-	CString strErrorMsg;
-
-	_STRUCT_IMG_INFO()
-	{
-		id = 0;
-		level = -1;
-		mode = -1;
-		dbVolKV = 0.0;
-		dbCurrentMA = 0.0;
-		bResult = FALSE;
-	}
-
-}IMG_INFO,*PIMG_INFO;
 
 #endif

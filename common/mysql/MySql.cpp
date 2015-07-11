@@ -87,7 +87,10 @@ BOOL MySql::ExecuteNoQuery(char ** sqlArray,int count)
      mysql_autocommit(&m_myData, 0); 
 	 for(int i=0;i<count;i++)
 	 {
-		 mysql_query(&m_myData,sqlArray[i]);
+		 if (mysql_query(&m_myData,sqlArray[i]) != 0)
+		 {
+			 return FALSE;
+		 }
 		 //查询受影响的行数
 		 //uRet=uRet+(unsigned)mysql_affected_rows(&myData); 
 	 }
@@ -99,7 +102,7 @@ BOOL MySql::ExecuteNoQuery(char ** sqlArray,int count)
 		 uRet=FALSE;
 	 }
      //恢复自动提交模式
-     mysql_autocommit(&m_myData, 0); 
+     mysql_autocommit(&m_myData, 1); 
 	 return uRet;
 }
 //执行查询语句

@@ -1,3 +1,4 @@
+#pragma once
 #include "include/mysql.h"
 #include <Afxmt.h>
 #include <afxsock.h>

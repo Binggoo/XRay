@@ -29,6 +29,7 @@ private:
 	int m_nCurSelPage;
 	CRect m_rect;
 	CMarkup *m_pXml;
+	CIni *m_pIni;
 
 	void ChangeSize(CWnd *pWnd, int cx,int cy,DWORD flag);
 public:
@@ -48,7 +49,7 @@ public:
 	//CPageData m_PageData;
 	CPageFilterParm m_PageFilterParm;
 
-	void SetConfig(CMarkup *pXml);
+	void SetConfig(CMarkup *pXml,CIni *pIni);
 	void SetLightError(CString strError);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

@@ -25,10 +25,13 @@ private:
 
 	CRect m_rect;
 
+	CIni *m_pIni;
+
 public:
 	CComboBox m_ComboBoxCtlMode;
 	CComboBox m_ComboBoxFrames;
 	CComboBox m_ComboBoxPosNum;
+	CComboBox m_ComboBoxLevel;
 
 	CButtonST m_BtnStaticCap;
 	CButtonST m_BtnContinueCap;
@@ -37,7 +40,7 @@ public:
 	CButtonST m_BtnView;
 	CButtonST m_BtnCheck;
 	CButtonST m_BtnBrowse;
-	CButtonST m_BtnOpen;
+//	CButtonST m_BtnOpen;
 	CButtonST m_BtnSave;
 
 	CButton m_CheckAutoProcess;
@@ -49,4 +52,7 @@ public:
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 	CEdit m_EditSavePath;
 	CEdit m_EditPN;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	void SetConfig(CIni *pIni) {m_pIni = pIni;};
+	afx_msg void OnBnClickedBtnClear();
 };

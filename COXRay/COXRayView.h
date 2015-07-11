@@ -87,6 +87,9 @@ protected:
 
 	// database
 	CMyDatabase m_MyDatabase;
+
+	UserInfo m_CurUser;
+
 	BOOL m_bDatabaseConnected;
 	int m_nCurrentId;
 
@@ -201,6 +204,16 @@ public:
 	afx_msg void OnUpdateProjectRecord(CCmdUI *pCmdUI);
 	afx_msg void OnProjectRecord();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnUpdateUserLogin(CCmdUI *pCmdUI);
+	afx_msg void OnUserLogin();
+	afx_msg void OnUpdateUserSignin(CCmdUI *pCmdUI);
+	afx_msg void OnUserSignin();
+	afx_msg void OnUpdateUserModifyPassword(CCmdUI *pCmdUI);
+	afx_msg void OnUserModifyPassword();
+	afx_msg void OnUpdateSettingCodeRule(CCmdUI *pCmdUI);
+	afx_msg void OnSettingCodeRule();
+	afx_msg void OnUpdateLineProfile(CCmdUI *pCmdUI);
+	afx_msg void OnLineProfile();
 };
 
 #ifndef _DEBUG  // COXRayView.cpp 中的调试版本

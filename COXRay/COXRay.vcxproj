@@ -135,6 +135,7 @@
     <ClInclude Include="..\xis\pane.h" />
     <ClInclude Include="BottomDialogBar.h" />
     <ClInclude Include="CalibrationSettingDlg.h" />
+    <ClInclude Include="CodeRuleDlg.h" />
     <ClInclude Include="CommonDef.h" />
     <ClInclude Include="CommSettingDlg.h" />
     <ClInclude Include="COXRay.h" />
@@ -152,7 +153,11 @@
     <ClInclude Include="InspectLevelDlg.h" />
     <ClInclude Include="LightControl.h" />
     <ClInclude Include="LightSettingDlg.h" />
+    <ClInclude Include="LineProfile.h" />
+    <ClInclude Include="LineProfileDlg.h" />
+    <ClInclude Include="LoginDlg.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="ModifyPasswordDlg.h" />
     <ClInclude Include="MyDatabase.h" />
     <ClInclude Include="PageData.h" />
     <ClInclude Include="PageFilterParm.h" />
@@ -168,6 +173,7 @@
     <ClInclude Include="RightDialogBar.h" />
     <ClInclude Include="RotateDlg.h" />
     <ClInclude Include="SaveSettingDlg.h" />
+    <ClInclude Include="SignInDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StepSetPath.h" />
     <ClInclude Include="StepTips.h" />
@@ -188,6 +194,7 @@
     <ClCompile Include="..\Meter\Meter.cpp" />
     <ClCompile Include="BottomDialogBar.cpp" />
     <ClCompile Include="CalibrationSettingDlg.cpp" />
+    <ClCompile Include="CodeRuleDlg.cpp" />
     <ClCompile Include="CommSettingDlg.cpp" />
     <ClCompile Include="COXRay.cpp" />
     <ClCompile Include="COXRayDoc.cpp" />
@@ -204,7 +211,11 @@
     <ClCompile Include="InspectLevelDlg.cpp" />
     <ClCompile Include="LightControl.cpp" />
     <ClCompile Include="LightSettingDlg.cpp" />
+    <ClCompile Include="LineProfile.cpp" />
+    <ClCompile Include="LineProfileDlg.cpp" />
+    <ClCompile Include="LoginDlg.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="ModifyPasswordDlg.cpp" />
     <ClCompile Include="MyDatabase.cpp" />
     <ClCompile Include="PageData.cpp" />
     <ClCompile Include="PageFilterParm.cpp" />
@@ -219,6 +230,7 @@
     <ClCompile Include="RightDialogBar.cpp" />
     <ClCompile Include="RotateDlg.cpp" />
     <ClCompile Include="SaveSettingDlg.cpp" />
+    <ClCompile Include="SignInDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

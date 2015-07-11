@@ -7,6 +7,8 @@
 
 #include "MainFrm.h"
 
+#include "CodeRuleDlg.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -22,6 +24,7 @@ END_MESSAGE_MAP()
 static UINT indicators[] =
 {
 	ID_SEPARATOR,           // 状态行指示器
+	ID_INDICATOR_USER,
 	ID_INDICATOR_ZOOM,
 	ID_INDICATOR_TIME,
 	ID_INDICATOR_IMG_INFO,
@@ -38,6 +41,7 @@ static UINT indicators[] =
 CMainFrame::CMainFrame()
 {
 	// TODO: 在此添加成员初始化代码
+	m_pIni = NULL;
 }
 
 CMainFrame::~CMainFrame()
@@ -114,8 +118,6 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 // 	{
 // 		if (pMsg->wParam == VK_RETURN)
 // 		{
-// 
-// 			PostMessage(WM_COMMAND,IDC_BTN_STATIC_CAP);
 // 			return TRUE;
 // 		}
 // 	}

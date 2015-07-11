@@ -39,7 +39,6 @@ void CProjectEditDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_INSPECT_MODE, m_ComboBoxInspectMode);
 	DDX_Control(pDX, IDC_LIST_POS, m_ListCtrl);
 	DDX_Control(pDX, IDC_COMBO_INSPECT_POS,m_ComboBoxPos);
-	DDX_Control(pDX,IDC_COMBO_WORKER,m_ComboBoxWorker);
 }
 
 
@@ -195,17 +194,6 @@ BOOL CProjectEditDlg::OnInitDialog()
 				m_pXml->OutOfElem();
 			}
 
-			// WorkerName
-			m_pXml->ResetChildPos();
-			if (m_pXml->FindChildElem(_T("WorkerName")))
-			{
-				m_pXml->IntoElem();
-
-				m_ComboBoxWorker.SetWindowText(m_pXml->GetData());
-
-				m_pXml->OutOfElem();
-			}
-
 			m_pXml->OutOfElem();
 		}
 	}
@@ -228,9 +216,8 @@ void CProjectEditDlg::OnBnClickedOk()
 
 	CTime time = CTime::GetCurrentTime();
 
-	CString strCustomerName,strWorkerName;
+	CString strCustomerName;
 	m_ComboBoxCustomer.GetWindowText(strCustomerName);
-	m_ComboBoxWorker.GetWindowText(strWorkerName);
 
 	CString strPosCount;
 	m_ComboBoxPos.GetWindowText(strPosCount);
@@ -366,19 +353,6 @@ void CProjectEditDlg::OnBnClickedOk()
 	{
 		m_pXml->IntoElem();
 		m_pXml->SetData(strPosCount);
-		m_pXml->OutOfElem();
-	}
-
-	// 创建WorkerName节点
-	m_pXml->ResetChildPos();
-	if (!m_pXml->FindChildElem(_T("WorkerName")))
-	{
-		m_pXml->AddChildElem(_T("WorkerName"));
-	}
-
-	{
-		m_pXml->IntoElem();
-		m_pXml->SetData(strWorkerName);
 		m_pXml->OutOfElem();
 	}
 

@@ -30,7 +30,6 @@ private:
 	CIni m_IniCustomer;
 
 	CString m_strProjectFile;
-	CString m_strWorkerName;
 
 	CMarkup *m_pXml;
 
@@ -40,7 +39,6 @@ public:
 	afx_msg void OnDeltaposSpinWidth(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposSpinHeight(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedOk();
-	void SetWorkerName(CString strWorkName) {m_strWorkerName = strWorkName;}
 
 	CString GetProjectFile() {return m_strProjectFile;}
 	afx_msg void OnBnClickedBtnInspectLevel();
