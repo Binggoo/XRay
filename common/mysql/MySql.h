@@ -80,6 +80,7 @@ public:
 	BOOL ClosePrepare();
 
 	BOOL IsTableExist(const char * tablename);
+	int QueryTableFields(const char * tablename);
 
 	//获得指定行和指定列的整形值
 	//行列都从0开始编号

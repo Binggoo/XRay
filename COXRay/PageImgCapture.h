@@ -3,6 +3,12 @@
 #include "../common/BtnST.h"
 
 // CPageImgCapture ¶Ô»°¿ò
+typedef enum _ENUM_RECORD_MODE
+{
+	Record_PN,
+	Record_Date,
+	Record_NO
+}RecordMode;
 
 class CPageImgCapture : public CDialogEx
 {
@@ -32,6 +38,7 @@ public:
 	CComboBox m_ComboBoxFrames;
 	CComboBox m_ComboBoxPosNum;
 	CComboBox m_ComboBoxLevel;
+	CComboBox m_ComboBoxRecordMode;
 
 	CButtonST m_BtnStaticCap;
 	CButtonST m_BtnContinueCap;
@@ -52,7 +59,13 @@ public:
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 	CEdit m_EditSavePath;
 	CEdit m_EditPN;
+	CEdit m_EditDate;
+	CEdit m_EditModuleNo;
+	CEdit m_EditDefectLen;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	void SetConfig(CIni *pIni) {m_pIni = pIni;};
 	afx_msg void OnBnClickedBtnClear();
+	afx_msg void OnCbnSelchangeComboRecordMode();
+	afx_msg void OnEnChangeEditDefectLen();
+	afx_msg void OnEnChangeEditDate();
 };

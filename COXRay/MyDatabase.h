@@ -1,48 +1,11 @@
 #pragma once
 #include "../common/mysql/mysql.h"
 
-#define QUERY_FIELDS_COUNT 13
-#define TABLE_FIELDS_COUNT 18
+static const char *main_table_name = "table_xray";
+static const char *sub_table_name = "table_sub";
+static const char *user_table_name = "table_user";
 
-static const char *table_name = "table_xray";
-static const char *query_fields[] = {
-	"project",
-	"product",
-	"serial",
-	"product_spec",
-	"customer",
-	"department",
-	"woker_name",
-	"level",
-	"mode",
-	"pos",
-	"voltage",
-	"current",
-	"result"
-};
-
-static const char *table_fields[] = {
-	"id",
-	"project",
-	"product",
-	"serial",
-	"product_spec",
-	"customer",
-	"department",
-	"woker_name",
-	"level",
-	"mode",
-	"pos",
-	"time",
-	"voltage",
-	"current",
-	"original_path",
-	"process_path",
-	"result",
-	"error_msg"
-};
-
-static const int fileds_width[] = {
+static const int main_fileds_width[] = {
 	60,
 	100,
 	100,
@@ -60,6 +23,17 @@ static const int fileds_width[] = {
 	200,
 	200,
 	60,
+	200
+};
+
+static const int sub_fileds_width[] = {
+	60,
+	150,
+	100,
+	100,
+	100,
+	100,
+	100,
 	200
 };
 
@@ -84,6 +58,18 @@ typedef enum _ENUM_TABLE_COL
 	COL_RESULT,
 	COL_MSG
 }TableCol;
+
+typedef enum _ENUM_SUB_TABLE_COL
+{
+	SUB_ID = 0,
+	SUB_TIME,
+	SUB_PRODUCT_TIME,
+	SUB_MODULE_NO,
+	SUB_DEFECT_LEN,
+	SUB_LEVEL,
+	SUB_USER,
+	SUB_PATH
+}SubTableCol;
 
 /*
 id --- –Ú∫≈
@@ -137,8 +123,24 @@ typedef struct _STRUCT_IMG_INFO
 
 }IMG_INFO,*PIMG_INFO;
 
+typedef struct _STRUCT_SUB_TABLE
+{
+	int id;
+	CTime time;
+	CString strProductDate;
+	CString strModuleNo;
+	CString strDefectLen;
+	int level;
+	CString strUser;
+	CString strPath;
 
-static const char *user_table_name = "table_user";
+	_STRUCT_SUB_TABLE()
+	{
+		id = 0;
+		time = 0;
+		level = 0;
+	}
+}SUB_TABLE,*PSUB_TABLE;
 
 typedef struct _STRUCT_USER_INFO
 {
@@ -160,16 +162,17 @@ public:
 	CMyDatabase(void);
 	~CMyDatabase(void);
 
-	BOOL CreateTable();
-	BOOL CleanupTable();
+	BOOL CleanupTable(CString strTableName);
+	BOOL DeleteTable(CString strTableName);
 
 	int InsertData(PIMG_INFO imgInfo);
+	BOOL UpdateResultData(PIMG_INFO imgInfo);
 	BOOL UpdateData(PIMG_INFO imgInfo);
 
 	BOOL IsExistField(CString strField);
-	BOOL InsertField(CString strNewField,CString strAfter);
+	BOOL InsertField(CString strTableName,CString strNewField,CString strAfter);
 
-	BOOL DeleteRecord(int id);
+	BOOL DeleteRecord(int id,CString strTable);
 
 	// ”√ªß
 	BOOL AddUser(UserInfo user);
@@ -181,5 +184,9 @@ public:
 
 	int GetUserInfo(CString strUserName, PUserInfo pUser);
 	int GetAllUser();
+
+	// SUBTable
+	BOOL AddSubTable(SUB_TABLE sub);
+	BOOL UpdateSubTable(SUB_TABLE sub);
 };
 

@@ -24,6 +24,7 @@ END_MESSAGE_MAP()
 static UINT indicators[] =
 {
 	ID_SEPARATOR,           // ×´Ì¬ÐÐÖ¸Ê¾Æ÷
+	ID_INDICATOR_PROJECT,
 	ID_INDICATOR_USER,
 	ID_INDICATOR_ZOOM,
 	ID_INDICATOR_TIME,

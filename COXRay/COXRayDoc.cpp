@@ -410,9 +410,18 @@ void CCOXRayDoc::OnBtnZoomIn()
 	{
 		m_dbZoomFactor += 0.01;
 	}
-	else
+	else if (m_dbZoomFactor < 1)
 	{
 		m_dbZoomFactor += 0.1;
+	}
+	else
+	{
+		m_dbZoomFactor += 0.5;
+	}
+
+	if (m_dbZoomFactor >= 10)
+	{
+		return;
 	}
 
 	CString strZoom;
@@ -447,9 +456,18 @@ void CCOXRayDoc::OnBtnZoomOut()
 	{
 		m_dbZoomFactor -= 0.01;
 	}
-	else
+	else if (m_dbZoomFactor < 1)
 	{
 		m_dbZoomFactor -= 0.1;
+	}
+	else
+	{
+		m_dbZoomFactor -= 0.5;
+	}
+
+	if (m_dbZoomFactor <= 0.01 + EPSINON || m_dbZoomFactor <= 0.01 - EPSINON )
+	{
+		return;
 	}
 
 	CString strZoom;

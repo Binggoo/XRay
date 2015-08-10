@@ -11,27 +11,45 @@ CMyDatabase::~CMyDatabase(void)
 {
 }
 
-BOOL CMyDatabase::CreateTable()
+BOOL CMyDatabase::CleanupTable(CString strTableName)
 {
-	/*
-	id --- 序号
-	project --- 项目名称
-	product --- 产品名称
-	product_spec --- 产品规格
-	customer --- 客户
-	department --- 部门或者产线
-	woker_name --- 检测员姓名或者工号
-	level --- 检测标准
-	mode --- 检测模式
-	pos --- 拍照位置
-	time --- 拍照时间
-	voltage --- 管电压
-	current --- 管电流
-	original_path --- 原始图片路径
-	process_path --- 处理后路径
-	result --- 检测结果
-	error_msg --- 错误描述
-	*/
+	CString strDML;
+	strDML.Format(_T("DELETE FROM %s;"),strTableName); // 逐条删除，速度慢
+//	strDML.Format(_T("TRUNCATE TABLE %s;"),strTableName); // 不记录日志，不可恢复，相当于一个新表，速度快
+
+	USES_CONVERSION;
+	char *dml = W2A(strDML);
+
+	BOOL bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("清空数据表失败！"));
+	}
+
+	return bRet;
+}
+
+BOOL CMyDatabase::DeleteTable(CString strTableName)
+{
+	CString strDML;
+	strDML.Format(_T("TRUNCATE TABLE %s;"),strTableName); // 不记录日志，不可恢复，相当于一个新表，速度快
+
+	USES_CONVERSION;
+	char *dml = W2A(strDML);
+
+	BOOL bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("清空数据表失败！"));
+	}
+
+	return bRet;
+}
+
+int CMyDatabase::InsertData( PIMG_INFO imgInfo )
+{
 	CString strDML;
 	strDML.Format(_T("CREATE TABLE IF NOT EXISTS %s\
 					 (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\
@@ -51,7 +69,7 @@ BOOL CMyDatabase::CreateTable()
 					 original_path TEXT NOT NULL,\
 					 process_path TEXT,\
 					 result TEXT,\
-					 error_msg TEXT);"),CString(table_name));
+					 error_msg TEXT);"),CString(main_table_name));
 
 
 	USES_CONVERSION;
@@ -62,38 +80,13 @@ BOOL CMyDatabase::CreateTable()
 	if (!bRet)
 	{
 		AfxMessageBox(_T("创建数据表失败！"));
+		return -1;
 	}
-
-	return bRet;
-}
-
-BOOL CMyDatabase::CleanupTable()
-{
-	CString strDML;
-	strDML.Format(_T("DELETE FROM %s;"),CString(table_name)); // 逐条删除，速度慢
-//	strDML.Format(_T("TRUNCATE TABLE %s;"),strTableName); // 不记录日志，不可恢复，相当于一个新表，速度快
-
-	USES_CONVERSION;
-	char *dml = W2A(strDML);
-
-	BOOL bRet = ExecuteNoQuery(&dml,1);
-
-	if (!bRet)
-	{
-		AfxMessageBox(_T("清空数据表失败！"));
-	}
-
-	return bRet;
-}
-
-int CMyDatabase::InsertData( PIMG_INFO imgInfo )
-{
-	CString strDML;
 
 	// 路径中把"\"改成"/"
 	imgInfo->strOrignalPath.Replace(_T('\\'),_T('/'));
 	strDML.Format(_T("INSERT INTO %s(project,product,serial,product_spec,customer,department,woker_name,level,mode,pos,time,voltage,current,original_path) \
-					 VALUES ('%s','%s','%s','%s','%s','%s','%s','%d','%d','%s','%s','%.1f','%.2f','%s');"),CString(table_name)
+					 VALUES ('%s','%s','%s','%s','%s','%s','%s','%d','%d','%s','%s','%.1f','%.2f','%s');"),CString(main_table_name)
 					 ,imgInfo->strProjectName,imgInfo->strProductName,imgInfo->strSerialNumber
 					 ,imgInfo->strProductSpec,imgInfo->strCustomer
 					 ,imgInfo->strDepartment,imgInfo->strWorkerName
@@ -102,10 +95,9 @@ int CMyDatabase::InsertData( PIMG_INFO imgInfo )
 					 ,imgInfo->dbVolKV,imgInfo->dbCurrentMA
 					 ,imgInfo->strOrignalPath);
 
-	USES_CONVERSION;
-	char *dml = W2A(strDML);
+	dml = W2A(strDML);
 
-	BOOL bRet = ExecuteNoQuery(&dml,1);
+	bRet = ExecuteNoQuery(&dml,1);
 
 	if (!bRet)
 	{
@@ -117,7 +109,7 @@ int CMyDatabase::InsertData( PIMG_INFO imgInfo )
 	// 获取当前数据序号
 	// MySQL中没有TOP，用的是LIMIT
 	//strDML.Format(_T("SELECT TOP 1 id FROM %s ORDER BY id DESC;"),CString(table_name));
-	strDML.Format(_T("SELECT id FROM %s ORDER BY id DESC LIMIT 1;"),CString(table_name));
+	strDML.Format(_T("SELECT id FROM %s ORDER BY id DESC LIMIT 1;"),CString(main_table_name));
 	dml = W2A(strDML);
 	int nCount = ExecuteQuery(dml);
 	if (nCount != 0)
@@ -128,13 +120,13 @@ int CMyDatabase::InsertData( PIMG_INFO imgInfo )
 	return 0;
 }
 
-BOOL CMyDatabase::InsertField( CString strNewField,CString strAfter )
+BOOL CMyDatabase::InsertField( CString strTableName,CString strNewField,CString strAfter )
 {
 	BOOL bRet = TRUE;
 	if (!IsExistField(strNewField))
 	{
 		CString strDML;
-		strDML.Format(_T("ALTER TABLE %s ADD %s TEXT AFTER %s;"),CString(table_name),strNewField,strAfter);
+		strDML.Format(_T("ALTER TABLE %s ADD %s TEXT AFTER %s;"),strTableName,strNewField,strAfter);
 
 		USES_CONVERSION;
 		char *dml = W2A(strDML);
@@ -153,7 +145,7 @@ BOOL CMyDatabase::InsertField( CString strNewField,CString strAfter )
 BOOL CMyDatabase::IsExistField( CString strField )
 {
 	CString strDML;
-	strDML.Format(_T("DESC %s %s;"),CString(table_name),strField);
+	strDML.Format(_T("DESC %s %s;"),CString(main_table_name),strField);
 
 	USES_CONVERSION;
 	char *dml = W2A(strDML);
@@ -161,11 +153,11 @@ BOOL CMyDatabase::IsExistField( CString strField )
 	return ExecuteQuery(dml);
 }
 
-BOOL CMyDatabase::UpdateData( PIMG_INFO imgInfo )
+BOOL CMyDatabase::UpdateResultData( PIMG_INFO imgInfo )
 {
 	CString strDML;
 	imgInfo->strProcessPath.Replace(_T('\\'),_T('/'));
-	strDML.Format(_T("UPDATE %s SET serial='%s',process_path='%s',result='%s',error_msg='%s' WHERE id='%d';"),CString(table_name)
+	strDML.Format(_T("UPDATE %s SET serial='%s',process_path='%s',result='%s',error_msg='%s' WHERE id='%d';"),CString(main_table_name)
 		,imgInfo->strSerialNumber,imgInfo->strProcessPath
 		,imgInfo->bResult ? _T("OK") : _T("NG"),imgInfo->strErrorMsg,imgInfo->id);
 
@@ -182,10 +174,10 @@ BOOL CMyDatabase::UpdateData( PIMG_INFO imgInfo )
 	return bRet;
 }
 
-BOOL CMyDatabase::DeleteRecord( int id )
+BOOL CMyDatabase::DeleteRecord( int id ,CString strTable)
 {
 	CString strDML;
-	strDML.Format(_T("DELETE FROM %s WHERE id='%d';"),CString(table_name),id);
+	strDML.Format(_T("DELETE FROM %s WHERE id='%d';"),strTable,id);
 
 	USES_CONVERSION;
 	char *dml = W2A(strDML);
@@ -351,4 +343,109 @@ int CMyDatabase::GetAllUser()
 	int nCount = ExecuteQuery(dml);
 
 	return nCount;
+}
+
+BOOL CMyDatabase::AddSubTable( SUB_TABLE sub )
+{
+	CString strDML;
+	strDML.Format(_T("CREATE TABLE IF NOT EXISTS %s\
+					 (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\
+					 time DATETIME NOT NULL,\
+					 product_date TEXT,\
+					 module_no TEXT,\
+					 defect_len TEXT,\
+					 level INT,\
+					 user TEXT,\
+					 path TEXT);"),CString(sub_table_name));
+
+
+	USES_CONVERSION;
+	char *dml = W2A(strDML);
+
+	BOOL bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("创建子表失败！"));
+
+		return bRet;
+	}
+
+	sub.strPath.Replace(_T('\\'),_T('/'));
+
+	strDML.Format(_T("INSERT INTO %s(time,product_date,module_no,defect_len,level,user,path) \
+					 VALUES ('%s','%s','%s','%s','%d','%s','%s');")
+		,CString(sub_table_name),sub.time.Format(_T("%Y-%m-%d %H:%M:%S"))
+		,sub.strProductDate,sub.strModuleNo,sub.strDefectLen,sub.level,sub.strUser,sub.strPath);
+
+	dml = W2A(strDML);
+
+	bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("添加数据失败！"));
+	}
+
+	return bRet;
+}
+
+BOOL CMyDatabase::UpdateSubTable( SUB_TABLE sub )
+{
+	CString strDML;
+	sub.strPath.Replace(_T('\\'),_T('/'));
+
+	strDML.Format(_T("UPDATE %s SET time='%s',product_date='%s',module_no='%s',\
+					 defect_len='%s',level='%d',user='%s',path='%s' WHERE id='%d';")
+					 ,CString(sub_table_name),sub.time.Format(_T("%Y-%m-%d %H:%M:%S"))
+					 ,sub.strProductDate,sub.strModuleNo,sub.strDefectLen
+					 ,sub.level,sub.strUser,sub.strPath,sub.id);
+
+	USES_CONVERSION;
+	char *dml = W2A(strDML);
+
+	BOOL bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("更新数据失败！"));
+	}
+
+	return bRet;
+}
+
+BOOL CMyDatabase::UpdateData( PIMG_INFO imgInfo )
+{
+	CString strDML;
+	imgInfo->strProcessPath.Replace(_T('\\'),_T('/'));
+
+	strDML.Format(_T("UPDATE %s SET project='%s',product='%s',serial='%s',\
+					 product_spec='%s',customer='%s',department='%s',woker_name='%s',\
+					 level='%d',mode='%d',pos='%s',time='%s',voltage='%f',\
+					 current='%f',original_path='%s',process_path='%s',result='%s',\
+					 error_msg='%s' WHERE id='%d';")
+					 ,CString(sub_table_name)
+					 ,imgInfo->strProjectName,imgInfo->strProductName,imgInfo->strSerialNumber
+					 ,imgInfo->strProductSpec,imgInfo->strCustomer
+					 ,imgInfo->strDepartment,imgInfo->strWorkerName
+					 ,imgInfo->level,imgInfo->mode
+					 ,imgInfo->strPos,imgInfo->time.Format(_T("%Y-%m-%d %H:%M:%S"))
+					 ,imgInfo->dbVolKV,imgInfo->dbCurrentMA
+					 ,imgInfo->strOrignalPath
+					 ,imgInfo->strProcessPath
+					 ,imgInfo->bResult ? _T("OK") : _T("NG")
+					 ,imgInfo->strErrorMsg
+					 ,imgInfo->id);
+
+	USES_CONVERSION;
+	char *dml = W2A(strDML);
+
+	BOOL bRet = ExecuteNoQuery(&dml,1);
+
+	if (!bRet)
+	{
+		AfxMessageBox(_T("更新数据失败！"));
+	}
+
+	return bRet;
 }

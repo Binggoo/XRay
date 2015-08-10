@@ -114,13 +114,19 @@
     <None Include="res\COXRay.ico" />
     <None Include="res\COXRay.rc2" />
     <None Include="res\COXRayDoc.ico" />
+    <None Include="res\cross.cur" />
     <None Include="test.xml">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\BtnST.h" />
+    <ClInclude Include="..\common\CEditList\ComboItem.h" />
+    <ClInclude Include="..\common\CEditList\EditItem.h" />
+    <ClInclude Include="..\common\CEditList\EditList.h" />
     <ClInclude Include="..\common\EnumSerial.h" />
+    <ClInclude Include="..\common\excel\excel9.h" />
+    <ClInclude Include="..\common\excel\MyExcel.h" />
     <ClInclude Include="..\common\Ini.h" />
     <ClInclude Include="..\common\Markup.h" />
     <ClInclude Include="..\common\mysql\MySql.h" />
@@ -182,7 +188,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\BtnST.cpp" />
+    <ClCompile Include="..\common\CEditList\ComboItem.cpp" />
+    <ClCompile Include="..\common\CEditList\EditItem.cpp" />
+    <ClCompile Include="..\common\CEditList\EditList.cpp" />
     <ClCompile Include="..\common\EnumSerial.cpp" />
+    <ClCompile Include="..\common\excel\excel9.cpp" />
+    <ClCompile Include="..\common\excel\MyExcel.cpp" />
     <ClCompile Include="..\common\Ini.cpp" />
     <ClCompile Include="..\common\Markup.cpp" />
     <ClCompile Include="..\common\mysql\MySql.cpp" />

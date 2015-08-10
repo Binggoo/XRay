@@ -68,6 +68,7 @@ typedef enum _ENUM_PLC_PORT
 {
 	D2000 = 2000,
 	D2001 = 2001,
+	D2010 = 2010,
 	D2100 = 2100
 }PLC_Port;
 
@@ -77,6 +78,14 @@ typedef enum _ENUM_INSPECT_MODE
 	SEMI_AUTO_MODE,
 	AUTO_MODE
 }InspectMode;
+
+typedef enum _ENUM_IMAGE_PROCESS
+{
+	IMG_ROTATE,
+	IMG_ENHANCE,
+	IMG_GAMMA,
+	IMG_INVERT
+}IMG_PROCESS;
 
 typedef struct _STRUCT_DRAW_INFO
 {

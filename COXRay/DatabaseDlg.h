@@ -1,8 +1,7 @@
 #pragma once
 #include "MyDatabase.h"
 #include "afxwin.h"
-
-
+#include "../common/CEditList/EditList.h"
 // CDatabaseDlg ¶Ô»°¿ò
 
 class CDatabaseDlg : public CDialogEx
@@ -25,9 +24,12 @@ private:
 	CDateTimeCtrl m_DataTimeCtrlEnd;
 	CComboBox m_ComboBoxUnion;
 	CComboBox m_ComboBoxFields;
+	CComboBox m_ComboBoxDataBase;
 	CListCtrl m_ListCtrlQueryCondition;
-	CListCtrl m_ListCtrlQueryResult;
+	CEditList m_ListCtrlQueryResult;
 	CMyDatabase *m_pMyDatabase;
+
+	int m_nCurSelectItem;
 
 	CStatic m_ThumbnailPic;
 
@@ -48,4 +50,12 @@ public:
 	afx_msg void OnNMRClickListQueryResult(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDatabaseDel();
 	afx_msg void OnDatabaseClear();
+	afx_msg void OnCbnSelchangeComboDatabase();
+	afx_msg void OnDatabaseDrop();
+	afx_msg void OnDatabaseClearAll();
+	afx_msg void OnDatabaseExport();
+	afx_msg void OnDatabaseOpenPath();
+	afx_msg void OnDatabaseModify();
+protected:
+	afx_msg LRESULT OnUserClick(WPARAM wParam, LPARAM lParam);
 };

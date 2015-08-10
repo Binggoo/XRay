@@ -49,6 +49,9 @@
     <Filter Include="ImageProcess">
       <UniqueIdentifier>{1eb2b9aa-f77d-4cf8-a63e-2d4291e7e83f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CEditList">
+      <UniqueIdentifier>{2e8bdeb9-3337-4a6e-91a7-d9a8bcef84df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -71,6 +74,9 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="test.xml" />
+    <None Include="res\cross.cur">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="COXRay.h">
@@ -253,6 +259,21 @@
     <ClInclude Include="LineProfileDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\excel\excel9.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\excel\MyExcel.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEditList\ComboItem.h">
+      <Filter>CEditList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEditList\EditItem.h">
+      <Filter>CEditList</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEditList\EditList.h">
+      <Filter>CEditList</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="COXRay.cpp">
@@ -416,6 +437,21 @@
     </ClCompile>
     <ClCompile Include="LineProfileDlg.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\excel\excel9.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\excel\MyExcel.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CEditList\ComboItem.cpp">
+      <Filter>CEditList</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CEditList\EditItem.cpp">
+      <Filter>CEditList</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CEditList\EditList.cpp">
+      <Filter>CEditList</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

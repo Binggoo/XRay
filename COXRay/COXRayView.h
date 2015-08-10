@@ -12,6 +12,12 @@
 #include "MainFrm.h"
 #include "HistogramDlg.h"
 
+typedef struct _STRUCT_VOID_PARM
+{
+	LPVOID lpVoid1;
+	LPVOID lpVoid2;
+}VOID_PARM,*PVOID_PARM;
+
 class CCOXRayView : public CScrollView
 {
 protected: // 仅从序列化创建
@@ -125,6 +131,8 @@ public:
 	// 判断缺陷等级
 	int AdjustDefectLevel(CMarkup *pXml,HTuple htRadius,HRegion hRegion,double dbScale,double dbPerPixel,int *plevel);
 
+	HImage AutoProcess(const HImage& Image);
+
 // 生成的消息映射函数
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -214,6 +222,8 @@ public:
 	afx_msg void OnSettingCodeRule();
 	afx_msg void OnUpdateLineProfile(CCmdUI *pCmdUI);
 	afx_msg void OnLineProfile();
+	afx_msg void OnFileLoadIni();
+	afx_msg void OnFileSaveIni();
 };
 
 #ifndef _DEBUG  // COXRayView.cpp 中的调试版本

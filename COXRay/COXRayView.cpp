@@ -29,6 +29,15 @@
 // 2015-07-06 Binggoo 1.保存图片还是改为保存24位图片，16位图片常用软件打开会有偏差。
 // 2015-07-07 Binggoo 1.增加是否保存图像编辑可选项。
 // 2015-07-11 Binggoo 1.加入Line Profile。
+// 2015-07-13 Binggoo 1.加入自动判断位置和缺陷等级功能，方便用户使用。
+// 2015-07-15 Binggoo 1.加入数据子表。
+//                    2.加入查询数据导出为Excel。
+// 2015-07-18 Binggoo 1.加入F1测距快捷键，F12静态采集快捷键，Shift+Enter保存快捷键。
+// 2015-07-20 Binggoo 1.修改在线程中处理图片，以便在采集的过程中修改序号。
+//                    2.加入自动累加编号的记录模式。
+// 2015-07-22 Binggoo 1.加入直接在List中修改数据库的功能。
+// 2015-07-24 Binggoo 1.发现在线程中使用CStatusBar出问题，取消在线程中采集处理图片。
+// 2015-08-07 Binggoo 1.加入画矩形和画椭圆快捷键F3、F5
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -172,6 +181,8 @@ ON_UPDATE_COMMAND_UI(ID_SETTING_CODE_RULE, &CCOXRayView::OnUpdateSettingCodeRule
 ON_COMMAND(ID_SETTING_CODE_RULE, &CCOXRayView::OnSettingCodeRule)
 ON_UPDATE_COMMAND_UI(ID_LINE_PROFILE, &CCOXRayView::OnUpdateLineProfile)
 ON_COMMAND(ID_LINE_PROFILE, &CCOXRayView::OnLineProfile)
+ON_COMMAND(ID_FILE_LOAD_INI, &CCOXRayView::OnFileLoadIni)
+ON_COMMAND(ID_FILE_SAVE_INI, &CCOXRayView::OnFileSaveIni)
 END_MESSAGE_MAP()
 
 // CCOXRayView 构造/析构
@@ -320,7 +331,7 @@ void CCOXRayView::OnInitialUpdate()
 
 //	m_pBottomDialogBar->DrawThumbnail(strSavePath,_T("*.*"));
 
-	SetOptionType(OP_SELECT);
+	SetOptionType(OP_ZOOM);
 
 	CCOXRayDoc* pDoc = GetDocument();
 	if (pDoc)
@@ -457,9 +468,17 @@ void CCOXRayView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				{
 					m_pHWindow->ClearWindow();
 
-					// 注意宽和高是反的
-					m_pHWindow->SetWindowExtents(cy,cx,nWidth,nHeight);
-					m_pHWindow->SetPart(0,0,nHeight,nWidth);
+					try
+					{
+						// 注意宽和高是反的
+						m_pHWindow->SetWindowExtents(cy,cx,nWidth,nHeight);
+						m_pHWindow->SetPart(0,0,nHeight,nWidth);
+					}
+					catch (HException &except)
+					{
+						AfxMessageBox(CString(except.message));
+					}
+					
 
 					m_bWindowOK = TRUE;
 				}
@@ -532,6 +551,16 @@ void CCOXRayView::OnLButtonDown(UINT nFlags, CPoint point)
 		case OP_ZOOM:
 			PostMessage(WM_COMMAND,IDC_BTN_ZOOM_IN);
 			break;
+
+			/*
+		case OP_DIST:
+		case OP_LINE:
+		case OP_ELLIPSE:
+		case OP_RECT:
+			SetCursor(AfxGetApp()->LoadCursor(MAKEINTRESOURCE(IDC_CURSOR_CROSS)));
+			break;
+			*/
+
 		}
 	}
 
@@ -593,9 +622,12 @@ void CCOXRayView::OnMouseMove(UINT nFlags, CPoint point)
 	case OP_RECT:
 	case OP_ELLIPSE:
 	case OP_DIST:
+	case OP_CALIB:
+// 		{
+// 			SetCursor(AfxGetApp()->LoadCursor(MAKEINTRESOURCE(IDC_CURSOR_CROSS)));
+// 		}
 	case OP_DEGREE:
 	case OP_TEXT:
-	case OP_CALIB:
 		return;
 	}
 
@@ -889,14 +921,7 @@ int CCOXRayView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_Ini.SetPathName(m_strAppPath + CONFIG_NAME);
 
 	m_bDatabaseConnected = m_MyDatabase.Connect("localhost","root","root","db_cox",3306);
-	if (m_bDatabaseConnected)
-	{
-		m_MyDatabase.CreateTable();
-
-		// 添加字段
-		m_MyDatabase.InsertField(_T("serial"),_T("product"));
-	}
-	else
+	if (!m_bDatabaseConnected)
 	{
 		AfxMessageBox(_T("连接数据库失败！"));
 	}
@@ -1346,13 +1371,48 @@ void CCOXRayView::OnBtnStaticCap()
 		return;
 	}
 
-	m_pRightDialogBar->m_PageImgCapture.m_BtnStaticCap.EnableWindow(FALSE);
+	m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.SetWindowText(_T(""));
 
 	CCOXRayDoc *pDoc = GetDocument();
 
 	pDoc->SetTitle(_T("图像采集"));
 
 	m_pHWindow->ClearWindow();
+
+	if (m_PLCommand.IsConnected())
+	{
+		DWORD dwD2010 = 0;
+		int nLen = 1;
+		if (!m_PLCommand.ReadPLCD(D2010,nLen,&dwD2010))
+		{
+			CString strMsg;
+			if (m_PLCommand.m_ErrorType == Error_System)
+			{
+				strMsg.Format(_T("读PLC位置失败，%s"),CUtils::GetErrorMsg(m_PLCommand.m_dwLastError));
+			}
+			else
+			{
+				strMsg.Format(_T("读PLC位置返回错误，错误代码0x%04X"),m_PLCommand.m_dwLastError);
+			}
+
+			m_pStatusBar->SetPaneText(0,strMsg);
+
+			AfxMessageBox(strMsg);
+		}
+		else
+		{
+			m_dwCurrentLocation = dwD2010;
+
+			int nIndex = m_pStatusBar->CommandToIndex(ID_INDICATOR_PLC_LOCATION);
+
+			CString strLocation;
+			strLocation.Format(_T("位置%d"),m_dwCurrentLocation);
+
+			m_pStatusBar->SetPaneText(nIndex,strLocation);
+
+			m_pRightDialogBar->m_PageImgCapture.m_ComboBoxPosNum.SetCurSel(dwD2010-1);
+		}
+	}
 
 	if (!m_bPLCStarted)
 	{
@@ -1422,6 +1482,7 @@ void CCOXRayView::OnBtnStaticCap()
 		return;
 	}
 
+	m_pRightDialogBar->m_PageImgCapture.m_BtnStaticCap.EnableWindow(FALSE);
 	m_bStopSnap = FALSE;
 	m_pStatusBar->SetPaneText(0,_T("正在静态采集......"));
 
@@ -1662,18 +1723,20 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 
 	HImage Image = HImage(pAcqData->pData,pAcqData->nColumns,pAcqData->nRows,"uint2");
 
+	/*
 	double dbDegree = m_Ini.GetDouble(_T("ImageProcess"),_T("Rotate"),0.0);
 
 	if (dbDegree != 0.0)
 	{
 		Image = RotateImage(Image,dbDegree);
 	}
+	*/
 
 	// 转换为8位3通道
-//	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
+	//	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
 
 	// 右转90度
-//	Image = Image.RotateImage(270,"constant");
+	//	Image = Image.RotateImage(270,"constant");
 
 	BOOL bAutoProcess = m_pRightDialogBar->m_PageImgCapture.m_CheckAutoProcess.GetCheck();
 
@@ -1683,6 +1746,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 	{
 		pDoc->SetImage(Image,FALSE);
 
+		/*
 		// 获取自动处理参数
 		double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
 		long maskWidth = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
@@ -1732,7 +1796,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 				}
 				m_ProjectXml.OutOfElem();
 			}
-	
+
 		}
 
 		// 自动处理
@@ -1745,6 +1809,9 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 		{
 			Image = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
 		}
+		*/
+
+		Image = AutoProcess(Image);
 
 		pDoc->SetImage(Image,TRUE,FALSE);
 
@@ -1777,6 +1844,38 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 		CString strPN;
 		m_pRightDialogBar->m_PageImgCapture.m_EditPN.GetWindowText(strPN);
 
+		int recordmode = m_pRightDialogBar->m_PageImgCapture.m_ComboBoxRecordMode.GetCurSel();
+
+		switch (recordmode)
+		{
+		case Record_Date:
+			{
+				CString strDate,strModulNo,strDefectLen;
+				m_pRightDialogBar->m_PageImgCapture.m_EditDate.GetWindowText(strDate);
+				m_pRightDialogBar->m_PageImgCapture.m_EditModuleNo.GetWindowText(strModulNo);
+				m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.GetWindowText(strDefectLen);
+
+				strPN.Format(_T("%s-%s-%s"),strDate,strModulNo,strDefectLen);
+			}
+			break;
+
+		case Record_NO:
+			{
+				CString strDate,strDefectLen;
+
+				m_pRightDialogBar->m_PageImgCapture.m_EditDate.GetWindowText(strDate);
+				m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.GetWindowText(strDefectLen);
+
+				int nNo = _ttoi(strDate);
+				nNo++;
+
+				strDate.Format(_T("%d"),nNo);
+
+				strPN.Format(_T("%s-%s"),strDate,strDefectLen);
+			}
+			break;
+		}
+
 		imgInfo.strSerialNumber = strPN;
 		imgInfo.time = time;
 		imgInfo.strDepartment = m_Ini.GetString(_T("SaveSetting"),_T("Department"));
@@ -1784,7 +1883,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 		imgInfo.strWorkerName = m_CurUser.strUserName;
 		imgInfo.dbVolKV = m_Ini.GetDouble(_T("LightSetting"),_T("Voltage"),0.0);
 		imgInfo.dbCurrentMA = m_Ini.GetDouble(_T("LightSetting"),_T("Current"),0.0);
-		
+
 		if (m_ProjectXml.IsWellFormed())
 		{
 			m_ProjectXml.ResetPos();
@@ -1918,7 +2017,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 			strSavePath.Format(_T("%s\\data\\%s\\%s")
 				,m_strAppPath,imgInfo.strProjectName,m_Pos1Time.Format(_T("%Y%m%d%H%M%S")));
 		}
-		
+
 		if (!PathFileExists(strSavePath))
 		{
 			SHCreateDirectory(NULL,strSavePath);
@@ -1978,7 +2077,7 @@ afx_msg LRESULT CCOXRayView::OnEndAcqMessage(WPARAM wParam, LPARAM lParam)
 			// 插入数据库
 			m_nCurrentId = m_MyDatabase.InsertData(&imgInfo);
 		}
-		
+
 	}
 
 	if (m_bPLCStarted && m_bPLCConnected && m_nInpectMode != MANUL_MODE)
@@ -2059,12 +2158,14 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 
 	HImage Image = HImage(pAcqData->pData,pAcqData->nColumns,pAcqData->nRows,"uint2");
 
+	/*
 	double dbDegree = m_Ini.GetDouble(_T("ImageProcess"),_T("Rotate"),0.0);
 
 	if (dbDegree != 0.0)
 	{
 		Image = RotateImage(Image,dbDegree);
 	}
+	*/
 
 	// 转换为8位3通道
 //	Image = ConvertImage(Image,IPL_DEPTH_8U,3);
@@ -2078,8 +2179,7 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 
 	if (bAutoProcess)
 	{
-		pDoc->SetImage(Image,FALSE);
-
+		/*
 		// 获取自动处理参数
 		double dbGamma = m_Ini.GetDouble(_T("ImageProcess"),_T("Gamma"),1.0);
 		long maskWidth = m_Ini.GetInt(_T("Enhance"),_T("MaskWidth"),7);
@@ -2142,8 +2242,11 @@ afx_msg LRESULT CCOXRayView::OnEndFrameMessage(WPARAM wParam, LPARAM lParam)
 		{
 			Image = EmphasizeImage(Image,maskWidth,maskHeight,dbFactor);
 		}
+		*/
 
-		pDoc->SetImage(Image,TRUE,FALSE);
+		Image = AutoProcess(Image);
+
+		pDoc->SetImage(Image);
 
 	}
 	else
@@ -2722,7 +2825,6 @@ void CCOXRayView::OnBtnDist()
 		SetOptionType(nType);
 		return;
 	}
-	
 
 	distance_pp(htRow1,htColumn1,htRow2,htColumn2,&dbDistance);
 
@@ -2809,6 +2911,47 @@ void CCOXRayView::OnBtnDist()
 	pDraw->nUnitIndex = nUnitIndex;
 
 	pDoc->SubmitUndoDraw(pDraw);
+
+	if (dbPerPixel > 0.0)
+	{
+		// 写距离
+		CString strDefectLen;
+		double dbDefectLen = dbDistance * dbPerPixel;
+		strDefectLen.Format(_T("%.2f"),dbDefectLen);
+
+		m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.SetWindowText(strDefectLen);
+
+		int nIndex = 0;
+
+		int nLevelCount = m_Ini.GetInt(_T("InspectLevel"),_T("Count"),1);
+
+		CString strLevel;
+		for (int i = 1; i < nLevelCount;i++)
+		{
+			strLevel.Format(_T("Level%d"),i);
+
+			if (dbDefectLen < m_Ini.GetDouble(_T("InspectLevel"),strLevel,0.0))
+			{
+				nIndex = i;
+				break;
+			}
+		}
+
+		strLevel.Format(_T("Level%d"),nLevelCount);
+		if (dbDefectLen >= m_Ini.GetDouble(_T("InspectLevel"),strLevel,0.0) + EPSINON
+			 || dbDefectLen >= m_Ini.GetDouble(_T("InspectLevel"),strLevel,0.0) - EPSINON)
+		{
+			nIndex = nLevelCount;
+		}
+
+		if (dbDefectLen == 0.0)
+		{
+			nIndex = 0;
+		}
+
+		m_pRightDialogBar->m_PageImgCapture.m_ComboBoxLevel.SetCurSel(nIndex);
+	}
+	
 
 	SetOptionType(nType);
 }
@@ -3249,6 +3392,7 @@ void CCOXRayView::OnBtnSave()
 
 	CString strPN,strFileName,strSavePath;
 	int level = m_pRightDialogBar->m_PageImgCapture.m_ComboBoxLevel.GetCurSel();
+	int recordmode = m_pRightDialogBar->m_PageImgCapture.m_ComboBoxRecordMode.GetCurSel();
 	m_pRightDialogBar->m_PageImgCapture.m_EditPN.GetWindowText(strPN);
 	m_pRightDialogBar->m_PageImgCapture.m_EditSavePath.GetWindowText(strSavePath);
 
@@ -3263,7 +3407,69 @@ void CCOXRayView::OnBtnSave()
 
 	strSavePath.TrimRight(_T("\\"));
 
+	switch (recordmode)
+	{
+	case Record_Date:
+		{
+			CString strDate,strModulNo,strDefectLen;
+			m_pRightDialogBar->m_PageImgCapture.m_EditDate.GetWindowText(strDate);
+			m_pRightDialogBar->m_PageImgCapture.m_EditModuleNo.GetWindowText(strModulNo);
+			m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.GetWindowText(strDefectLen);
+
+			strDefectLen.Trim();
+			if (strDefectLen.IsEmpty())
+			{
+				strDefectLen = _T("OK");
+				m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.SetWindowText(strDefectLen);
+			}
+
+			strPN.Format(_T("%s-%s-%s"),strDate,strModulNo,strDefectLen);
+
+			SUB_TABLE sub;
+			sub.time = time;
+			sub.strProductDate = strDate;
+			sub.strModuleNo = strModulNo;
+			sub.strDefectLen = strDefectLen;
+			sub.level = level;
+			sub.strUser = m_CurUser.strUserName;
+			sub.strPath.Format(_T("%s\\%s_POS%d_DL%d_%s.png"),strSavePath,strPN,m_dwCurrentLocation,level,time.Format(_T("%Y%m%d_%H%M%S")));
+
+			if (m_bDatabaseConnected && m_dwCurrentLocation == 1)
+			{
+				m_MyDatabase.AddSubTable(sub);
+			}
+		}
+		break;
+
+	case Record_NO:
+		{
+			CString strDate,strDefectLen;
+
+			m_pRightDialogBar->m_PageImgCapture.m_EditDate.GetWindowText(strDate);
+			m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.GetWindowText(strDefectLen);
+
+			strDefectLen.Trim();
+			if (strDefectLen.IsEmpty())
+			{
+				strDefectLen = _T("OK");
+				m_pRightDialogBar->m_PageImgCapture.m_EditDefectLen.SetWindowText(strDefectLen);
+			}
+
+			int nNo = _ttoi(strDate);
+			nNo++;
+
+			strDate.Format(_T("%d"),nNo);
+
+			m_pRightDialogBar->m_PageImgCapture.m_EditDate.SetWindowText(strDate);
+
+			strPN.Format(_T("%s-%s"),strDate,strDefectLen);
+
+		}
+		break;
+	}
+	
 	strFileName.Format(_T("%s\\%s_POS%d_DL%d_%s"),strSavePath,strPN,m_dwCurrentLocation,level,time.Format(_T("%Y%m%d_%H%M%S")));
+	
 
 	strFileName += _T(".png");
 
@@ -3276,7 +3482,7 @@ void CCOXRayView::OnBtnSave()
 
 	if (m_bDatabaseConnected)
 	{
-		m_MyDatabase.UpdateData(&imgInfo);
+		m_MyDatabase.UpdateResultData(&imgInfo);
 	}
 
 	if (bSaveEdit)
@@ -4885,4 +5091,130 @@ void CCOXRayView::OnLineProfile()
 	SetOptionType(nType);
 
 	OnUpdate(NULL,WM_USER_NEWIMAGE,NULL);
+}
+
+HImage CCOXRayView::AutoProcess( const HImage& Image )
+{
+	int nStepCount = m_Ini.GetInt(_T("AutoProcess"),_T("StepCount"),0);
+
+	HImage TempImage = Image.CopyImage();
+
+	CString strStep,strValue;
+	for (int i = 1; i <= nStepCount;++i)
+	{
+		strStep.Format(_T("Step_%d"),i);
+
+		strValue = m_Ini.GetString(_T("AutoProcess"),strStep);
+
+		int step = _ttoi(strValue);
+
+		switch (step)
+		{
+		case IMG_ROTATE:
+			{
+				double dbRotate = _ttof(strValue.Mid(strValue.Find(_T(':')) + 1));
+
+				TempImage = RotateImage(TempImage,dbRotate);
+			}
+			break;
+
+		case IMG_ENHANCE:
+			{
+				CString strParm = strValue.Mid(strValue.Find(_T(':')) + 1);
+
+				// 提取参数
+				long lMaskWidth = 0,lMaskHeight = 0;
+				double dbFactor = 0.0;
+				int nTimes = 0;
+
+				int nCurPos = 0,nCount = 0;
+				CString strToken = strParm.Tokenize(_T(","),nCurPos);
+				while (nCurPos != -1)
+				{
+					switch (nCount)
+					{
+					case 0:
+						lMaskWidth = _ttol(strToken);
+						break;
+
+					case 1:
+						lMaskHeight = _ttol(strToken);
+						break;
+
+					case 2:
+						dbFactor = _ttof(strToken);
+						break;
+
+					case 3:
+						nTimes = _ttoi(strToken);
+						break;
+					}
+
+					nCount++;
+
+					strToken = strParm.Tokenize(_T(","),nCurPos);
+				}
+
+				for (int i = 0; i < nTimes;i++)
+				{
+					TempImage = EmphasizeImage(TempImage,lMaskWidth,lMaskHeight,dbFactor);
+				}
+			}
+			break;
+
+		case IMG_GAMMA:
+			{
+				double dbGamma = _ttof(strValue.Mid(strValue.Find(_T(':')) + 1));
+
+				TempImage = GammaImage(TempImage,dbGamma);
+			}
+			break;
+
+		case IMG_INVERT:
+			{
+				TempImage = InvertImage(TempImage);
+			}
+			break;
+		}
+	}
+
+	return TempImage;
+}
+
+
+void CCOXRayView::OnFileLoadIni()
+{
+	// TODO: 在此添加命令处理程序代码
+	CFileDialog dlg(TRUE,_T("INI"),NULL,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,_T("INI Files(*.INI)|*.INI||"));
+	dlg.m_ofn.lpstrInitialDir = m_strAppPath;
+
+	if (dlg.DoModal() == IDOK)
+	{
+		m_Ini.SetPathName(dlg.GetPathName());
+
+		int nIndex = m_pStatusBar->CommandToIndex(ID_INDICATOR_PROJECT);
+		m_pStatusBar->SetPaneText(nIndex,dlg.GetFileTitle());
+	}
+}
+
+
+void CCOXRayView::OnFileSaveIni()
+{
+	// TODO: 在此添加命令处理程序代码
+	CFileDialog dlg(FALSE,_T("INI"),NULL,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,_T("INI Files(*.INI)|*.INI||"));
+	dlg.m_ofn.lpstrInitialDir = m_strAppPath;
+
+	if (dlg.DoModal() == IDOK)
+	{
+		CString strIniPath = m_Ini.GetPathName();
+
+		if (CopyFile(strIniPath,dlg.GetPathName(),FALSE))
+		{
+			AfxMessageBox(_T("保存成功！"));
+		}
+		else
+		{
+			AfxMessageBox(_T("保存失败！"));
+		}
+	}
 }

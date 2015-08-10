@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COXRay>
+  <Project>
+    <ProjectName>1234567</ProjectName>
+    <CreateTime>2015-05-27 11:15:48</CreateTime>
+    <ModifyTime>2015-05-27 11:15:48</ModifyTime>
+    <CustomerName>BMW</CustomerName>
+    <ProductName>1234567</ProductName>
+    <ProductLengh>25</ProductLengh>
+    <ProductWidth>10</ProductWidth>
+    <ProductHeight>5</ProductHeight>
+    <InspectLevel>1</InspectLevel>
+    <InspectMode>1</InspectMode>
+    <InspectPos>6</InspectPos>
+
+    <POS_1 Areas="3" Voltage="20.0" Current="1.50">
+      <Area_1 MinGray="120" MaxGray="200" Row="10" Column="20" Phi="0" Length1="100" Length2="50"></Area_1>
+      <Area_2 MinGray="120" MaxGray="200" Row="10" Column="20" Phi="0" Length1="100" Length2="50"></Area_2>
+      <Area_3 MinGray="120" MaxGray="200" Row="10" Column="20" Phi="0" Length1="100" Length2="50"></Area_3>
+    </POS_1>
+  </Project>
+</COXRay>

@@ -558,3 +558,11 @@ BOOL MySql::IsTableExist( const char * tablename )
 
 	return ExecuteQuery(sql);
 }
+
+BOOL MySql::QueryTableFields( const char * tablename )
+{
+	char sql[1024] = {NULL};
+	sprintf_s(sql,"SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE table_name = '%s'; ",tablename);
+
+	return ExecuteQuery(sql);
+}
