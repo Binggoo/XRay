@@ -24,6 +24,7 @@ public:
 // ²Ù×÷
 public:
 	HImage *GetImage() {return m_pHWorkImage;}
+	HImage *GetOriginImage() {return m_pOriginImage;}
 	void SetImage(HImage Image,BOOL bUpdateWindow = TRUE,BOOL bNew = TRUE);
 	int GetChanels() {return m_nChanels;}
 	double GetZoomFactor() {return m_dbZoomFactor;}

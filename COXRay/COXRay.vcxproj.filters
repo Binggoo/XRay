@@ -274,6 +274,9 @@
     <ClInclude Include="..\common\CEditList\EditList.h">
       <Filter>CEditList</Filter>
     </ClInclude>
+    <ClInclude Include="AutoProcessAlgDlg.h">
+      <Filter>dlg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="COXRay.cpp">
@@ -452,6 +455,9 @@
     </ClCompile>
     <ClCompile Include="..\common\CEditList\EditList.cpp">
       <Filter>CEditList</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoProcessAlgDlg.cpp">
+      <Filter>dlg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

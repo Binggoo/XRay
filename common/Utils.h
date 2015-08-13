@@ -64,5 +64,7 @@ public:
 	static BOOL CreateAllDirectories(CString strDir);
 	static void DeleteDirectory( LPCTSTR lpszPath );
 
+	static void TokenString(CString str,CString token,CStringArray *pstrArray);
+
 };
 

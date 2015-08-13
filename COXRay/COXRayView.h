@@ -224,6 +224,8 @@ public:
 	afx_msg void OnLineProfile();
 	afx_msg void OnFileLoadIni();
 	afx_msg void OnFileSaveIni();
+	afx_msg void OnUpdateAutoProcessAlg(CCmdUI *pCmdUI);
+	afx_msg void OnAutoProcessAlg();
 };
 
 #ifndef _DEBUG  // COXRayView.cpp 中的调试版本

@@ -544,6 +544,21 @@ void CUtils::DeleteDirectory( LPCTSTR lpszPath )
 	RemoveDirectory(lpszPath);
 }
 
+void CUtils::TokenString( CString str,CString token,CStringArray *pstrArray )
+{
+	int nCurPos = 0;
+	CString strToken = str.Tokenize(token,nCurPos);
+
+	pstrArray->RemoveAll();
+
+	while (nCurPos != -1)
+	{
+		pstrArray->Add(strToken);
+
+		strToken = str.Tokenize(token,nCurPos);
+	}
+}
+
 void _DbgPrintA( char *szFormat,... )
 {
 	char szBuffer[1024] = {NULL};

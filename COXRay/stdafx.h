@@ -46,6 +46,9 @@ using namespace Gdiplus;
 #include <cpp/HalconCpp.h>
 using namespace Halcon;
 
+#include <vector>
+using namespace std;
+
 #include "../common/Utils.h"
 #include "../common/Ini.h"
 #include "../common/Stopwatch.h"

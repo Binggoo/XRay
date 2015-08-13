@@ -84,7 +84,10 @@ typedef enum _ENUM_IMAGE_PROCESS
 	IMG_ROTATE,
 	IMG_ENHANCE,
 	IMG_GAMMA,
-	IMG_INVERT
+	IMG_INVERT,
+	IMG_GAUSS,
+	IMG_MEAN,
+	IMG_MEDIAN
 }IMG_PROCESS;
 
 typedef struct _STRUCT_DRAW_INFO
@@ -102,5 +105,7 @@ typedef struct _STRUCT_DRAW_INFO
 	double dbPerPixel;
 	UINT nUnitIndex;
 }DrawInfo,*PDrawInfo;
+
+
 
 #endif

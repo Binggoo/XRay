@@ -38,6 +38,7 @@
 // 2015-07-22 Binggoo 1.加入直接在List中修改数据库的功能。
 // 2015-07-24 Binggoo 1.发现在线程中使用CStatusBar出问题，取消在线程中采集处理图片。
 // 2015-08-07 Binggoo 1.加入画矩形和画椭圆快捷键F3、F5
+// 2015-08-13 Binggoo 1.加入自定义图像处理算法顺序
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -69,6 +70,7 @@
 #include "CodeRuleDlg.h"
 #include "ModifyPasswordDlg.h"
 #include "LineProfileDlg.h"
+#include "AutoProcessAlgDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -183,6 +185,8 @@ ON_UPDATE_COMMAND_UI(ID_LINE_PROFILE, &CCOXRayView::OnUpdateLineProfile)
 ON_COMMAND(ID_LINE_PROFILE, &CCOXRayView::OnLineProfile)
 ON_COMMAND(ID_FILE_LOAD_INI, &CCOXRayView::OnFileLoadIni)
 ON_COMMAND(ID_FILE_SAVE_INI, &CCOXRayView::OnFileSaveIni)
+ON_UPDATE_COMMAND_UI(ID_AUTO_PROCESS_ALG, &CCOXRayView::OnUpdateAutoProcessAlg)
+ON_COMMAND(ID_AUTO_PROCESS_ALG, &CCOXRayView::OnAutoProcessAlg)
 END_MESSAGE_MAP()
 
 // CCOXRayView 构造/析构
@@ -5099,12 +5103,15 @@ HImage CCOXRayView::AutoProcess( const HImage& Image )
 
 	HImage TempImage = Image.CopyImage();
 
-	CString strStep,strValue;
+	CString strStep,strValue,strParm;
+	
 	for (int i = 1; i <= nStepCount;++i)
 	{
 		strStep.Format(_T("Step_%d"),i);
 
 		strValue = m_Ini.GetString(_T("AutoProcess"),strStep);
+
+		strParm = strValue.Mid(strValue.Find(_T(':')) + 1);
 
 		int step = _ttoi(strValue);
 
@@ -5112,7 +5119,7 @@ HImage CCOXRayView::AutoProcess( const HImage& Image )
 		{
 		case IMG_ROTATE:
 			{
-				double dbRotate = _ttof(strValue.Mid(strValue.Find(_T(':')) + 1));
+				double dbRotate = _ttof(strParm);
 
 				TempImage = RotateImage(TempImage,dbRotate);
 			}
@@ -5120,8 +5127,6 @@ HImage CCOXRayView::AutoProcess( const HImage& Image )
 
 		case IMG_ENHANCE:
 			{
-				CString strParm = strValue.Mid(strValue.Find(_T(':')) + 1);
-
 				// 提取参数
 				long lMaskWidth = 0,lMaskHeight = 0;
 				double dbFactor = 0.0;
@@ -5164,7 +5169,7 @@ HImage CCOXRayView::AutoProcess( const HImage& Image )
 
 		case IMG_GAMMA:
 			{
-				double dbGamma = _ttof(strValue.Mid(strValue.Find(_T(':')) + 1));
+				double dbGamma = _ttof(strParm);
 
 				TempImage = GammaImage(TempImage,dbGamma);
 			}
@@ -5173,6 +5178,73 @@ HImage CCOXRayView::AutoProcess( const HImage& Image )
 		case IMG_INVERT:
 			{
 				TempImage = InvertImage(TempImage);
+			}
+			break;
+
+		case IMG_GAUSS:
+			{
+				int size = _ttoi(strParm);
+
+				TempImage = GaussImage(TempImage,size);
+			}
+			break;
+
+		case IMG_MEAN:
+			{
+				// 提取参数
+				long lMaskWidth = 0,lMaskHeight = 0;
+
+				int nCurPos = 0,nCount = 0;
+				CString strToken = strParm.Tokenize(_T(","),nCurPos);
+				while (nCurPos != -1)
+				{
+					switch (nCount)
+					{
+					case 0:
+						lMaskWidth = _ttol(strToken);
+						break;
+
+					case 1:
+						lMaskHeight = _ttol(strToken);
+						break;
+					}
+
+					nCount++;
+
+					strToken = strParm.Tokenize(_T(","),nCurPos);
+				}
+
+				TempImage = MeanImage(TempImage,lMaskWidth,lMaskHeight);
+			}
+			break;
+
+		case IMG_MEDIAN:
+			{
+				// 提取参数
+				int maskType = 0;
+				long radius = 1;
+
+				int nCurPos = 0,nCount = 0;
+				CString strToken = strParm.Tokenize(_T(","),nCurPos);
+				while (nCurPos != -1)
+				{
+					switch (nCount)
+					{
+					case 0:
+						maskType = _ttoi(strToken);
+						break;
+
+					case 1:
+						radius = _ttol(strToken);
+						break;
+					}
+
+					nCount++;
+
+					strToken = strParm.Tokenize(_T(","),nCurPos);
+				}
+
+				TempImage = MedianImage(TempImage,maskType,radius);
 			}
 			break;
 		}
@@ -5216,5 +5288,233 @@ void CCOXRayView::OnFileSaveIni()
 		{
 			AfxMessageBox(_T("保存失败！"));
 		}
+	}
+}
+
+
+void CCOXRayView::OnUpdateAutoProcessAlg(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	CCOXRayDoc *pDoc = GetDocument();
+
+	BOOL bEnable = FALSE;
+	if (pDoc)
+	{
+		HImage *pImage = pDoc->GetImage();
+
+		bEnable = pImage != NULL;
+	}
+
+	pCmdUI->Enable(bEnable);
+}
+
+
+void CCOXRayView::OnAutoProcessAlg()
+{
+	// TODO: 在此添加命令处理程序代码
+	CCOXRayDoc *pDoc = GetDocument();
+
+	if (pDoc == NULL)
+	{
+		return;
+	}
+
+	HImage *pImage = pDoc->GetOriginImage();
+
+	VImgProcessAlgs vImgAlgs;
+
+	int nStepCount = m_Ini.GetInt(_T("AutoProcess"),_T("StepCount"),0);
+
+	CString strStep,strValue,strParm;
+	for (int i = 1; i <= nStepCount;++i)
+	{
+		strStep.Format(_T("Step_%d"),i);
+
+		strValue = m_Ini.GetString(_T("AutoProcess"),strStep);
+
+		CString strParm = strValue.Mid(strValue.Find(_T(':')) + 1);
+
+		int step = _ttoi(strValue);
+
+		ShareImgProcessAlgs alg(new ImgProcessAlgs());
+		alg->nAlg = step;
+
+		switch (step)
+		{
+		case IMG_ROTATE:
+			{
+				ShareKeyValue keyValue(new KeyValue());
+
+				keyValue->strKey = _T("旋转角度");
+				keyValue->strValue = strParm;
+
+				alg->vAlgs.push_back(keyValue);
+				
+			}
+			break;
+
+		case IMG_ENHANCE:
+			{
+				ShareKeyValue keyValues[4];
+
+				for (int i = 0;i < 4;++i)
+				{
+					keyValues[i] = ShareKeyValue(new KeyValue());
+				}
+
+				keyValues[0]->strKey = _T("Mask宽度");
+				keyValues[0]->strValue = _T("3");
+
+				keyValues[1]->strKey = _T("Mask高度");
+				keyValues[1]->strValue = _T("3");
+
+				keyValues[2]->strKey = _T("强度系数");
+				keyValues[2]->strValue = _T("1.0");
+
+				keyValues[3]->strKey = _T("增强次数");
+				keyValues[3]->strValue = _T("1");
+
+				// 提取参数
+				CStringArray strArray;
+				CUtils::TokenString(strParm,_T(", ;"),&strArray);
+				for (int i = 0; i < strArray.GetCount();++i)
+				{
+					keyValues[i]->strValue = strArray.GetAt(i);
+				}
+
+				for (int i = 0;i < 4;++i)
+				{
+					alg->vAlgs.push_back(keyValues[i]);
+				}
+				
+			}
+			break;
+
+		case IMG_GAMMA:
+			{
+				ShareKeyValue keyValue(new KeyValue());
+
+				keyValue->strKey = _T("GAMMA系数");
+				keyValue->strValue = strParm;
+
+				alg->vAlgs.push_back(keyValue);
+				
+			}
+			break;
+
+		case IMG_INVERT:
+			{
+				
+			}
+			break;
+
+		case IMG_GAUSS:
+			{
+				ShareKeyValue keyValue(new KeyValue);
+				keyValue->strKey = _T("滤波器大小");
+				keyValue->strValue = strParm;
+				alg->vAlgs.push_back(keyValue);
+			}
+			break;
+
+		case IMG_MEAN:
+			{			
+				ShareKeyValue keyValues[2];
+
+				for (int i = 0;i < 2;++i)
+				{
+					keyValues[i] = ShareKeyValue(new KeyValue());
+				}
+
+				keyValues[0]->strKey = _T("Mask宽度");
+				keyValues[0]->strValue = _T("3");
+
+				keyValues[1]->strKey = _T("Mask高度");
+				keyValues[1]->strValue = _T("3");
+
+
+				// 提取参数
+				CStringArray strArray;
+				CUtils::TokenString(strParm,_T(", ;"),&strArray);
+				for (int i = 0; i < strArray.GetCount();++i)
+				{
+					keyValues[i]->strValue = strArray.GetAt(i);
+				}
+
+				for (int i = 0;i < 2;++i)
+				{
+					alg->vAlgs.push_back(keyValues[i]);
+				}
+
+			}
+			break;
+
+		case IMG_MEDIAN:
+			{
+				ShareKeyValue keyValues[2];
+
+				for (int i = 0;i < 2;++i)
+				{
+					keyValues[i] = ShareKeyValue(new KeyValue());
+				}
+
+				keyValues[0]->strKey = _T("Mask类型");
+				keyValues[0]->strValue = _T("1");
+
+				keyValues[1]->strKey = _T("Mask半径");
+				keyValues[1]->strValue = _T("3");
+
+
+				// 提取参数
+				CStringArray strArray;
+				CUtils::TokenString(strParm,_T(", ;"),&strArray);
+				for (int i = 0; i < strArray.GetCount();++i)
+				{
+					keyValues[i]->strValue = strArray.GetAt(i);
+				}
+
+				for (int i = 0;i < 2;++i)
+				{
+					alg->vAlgs.push_back(keyValues[i]);
+				}
+			}
+			break;
+		}
+
+		vImgAlgs.push_back(alg);
+	}
+
+	CAutoProcessAlgDlg dlg;
+	dlg.SetImgProcessAlg(&vImgAlgs);
+	if (dlg.DoModal() == IDOK)
+	{
+		nStepCount = vImgAlgs.size();
+		m_Ini.DeleteSection(_T("AutoProcess"));
+		m_Ini.WriteInt(_T("AutoProcess"),_T("StepCount"),nStepCount);
+
+		int step = 1;
+		BOOST_FOREACH(ShareImgProcessAlgs alg,vImgAlgs)
+		{
+			strStep.Format(_T("Step_%d"),step);
+			
+			strValue.Format(_T("%d:"),alg->nAlg);
+
+			BOOST_FOREACH(ShareKeyValue keyValue,alg->vAlgs)
+			{
+				strParm.Format(_T("%s,"),keyValue->strValue);
+
+				strValue += strParm;
+			}
+
+			strValue.TrimRight(_T(","));
+
+			m_Ini.WriteString(_T("AutoProcess"),strStep,strValue);
+
+			++step;
+		}
+
+		HImage image = AutoProcess(*pImage);
+
+		pDoc->SetImage(image,TRUE,FALSE);
 	}
 }
