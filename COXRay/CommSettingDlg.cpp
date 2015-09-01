@@ -15,6 +15,7 @@ CCommSettingDlg::CCommSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CCommSettingDlg::IDD, pParent)
 	, m_nEditPort(0)
 	, m_bCheckAutoConnect(FALSE)
+	, m_nEditSleepBeforeSnap(0)
 {
 	m_pIni = NULL;
 }
@@ -28,7 +29,9 @@ void CCommSettingDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_IPADDRESS, m_IPAddressCtrl);
 	DDX_Text(pDX, IDC_EDIT_PORT, m_nEditPort);
+	DDX_Text(pDX, IDC_EDIT_LOC_NUMS, m_nEditLocNums);
 	DDX_Check(pDX, IDC_CHECK_AUTO_CONNECT, m_bCheckAutoConnect);
+	DDX_Text(pDX, IDC_EDIT_SLEEP_BEFORE_SNAP, m_nEditSleepBeforeSnap);
 }
 
 
@@ -49,6 +52,8 @@ BOOL CCommSettingDlg::OnInitDialog()
 	CString strIPAddr = m_pIni->GetString(_T("CommSetting"),_T("IPAddress"));
 	m_nEditPort = m_pIni->GetUInt(_T("CommSetting"),_T("PortNum"),8000);
 	m_bCheckAutoConnect = m_pIni->GetBool(_T("CommSetting"),_T("En_AutoConnect"),TRUE);
+	m_nEditLocNums = m_pIni->GetUInt(_T("CommSetting"),_T("LoctionNums"),1);
+	m_nEditSleepBeforeSnap = m_pIni->GetUInt(_T("CommSetting"),_T("SleepBeforeSnap"),500);
 
 	m_IPAddressCtrl.SetWindowText(strIPAddr);
 
@@ -69,6 +74,8 @@ void CCommSettingDlg::OnBnClickedOk()
 	m_pIni->WriteString(_T("CommSetting"),_T("IPAddress"),strIPAddr);
 	m_pIni->WriteUInt(_T("CommSetting"),_T("PortNum"),m_nEditPort);
 	m_pIni->WriteBool(_T("CommSetting"),_T("En_AutoConnect"),m_bCheckAutoConnect);
+	m_pIni->WriteUInt(_T("CommSetting"),_T("LoctionNums"),m_nEditLocNums);
+	m_pIni->WriteUInt(_T("CommSetting"),_T("SleepBeforeSnap"),m_nEditSleepBeforeSnap);
 
 	CDialogEx::OnOK();
 }

@@ -23,10 +23,13 @@ private:
 	CIPAddressCtrl m_IPAddressCtrl;
 	UINT m_nEditPort;
 	BOOL m_bCheckAutoConnect;
+	UINT m_nEditLocNums;
 
 	CIni *m_pIni;
 public:
 	virtual BOOL OnInitDialog();
 	void SetConfig(CIni *pIni) {m_pIni = pIni;}
 	afx_msg void OnBnClickedOk();
+private:
+	UINT m_nEditSleepBeforeSnap;
 };

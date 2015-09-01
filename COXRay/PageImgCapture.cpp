@@ -245,8 +245,8 @@ void CPageImgCapture::OnCbnSelchangeComboCtlMode()
 
 	GetDlgItem(IDC_BTN_START)->EnableWindow(nSelIndex);
 	GetDlgItem(IDC_BTN_STOP)->EnableWindow(FALSE);
-	GetDlgItem(IDC_BTN_STATIC_CAP)->EnableWindow(!nSelIndex);
-	GetDlgItem(IDC_BTN_CONT_CAP)->EnableWindow(!nSelIndex);
+// 	GetDlgItem(IDC_BTN_STATIC_CAP)->EnableWindow(!nSelIndex);
+// 	GetDlgItem(IDC_BTN_CONT_CAP)->EnableWindow(!nSelIndex);
 }
 
 

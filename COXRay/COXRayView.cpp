@@ -39,6 +39,7 @@
 // 2015-07-24 Binggoo 1.发现在线程中使用CStatusBar出问题，取消在线程中采集处理图片。
 // 2015-08-07 Binggoo 1.加入画矩形和画椭圆快捷键F3、F5
 // 2015-08-13 Binggoo 1.加入自定义图像处理算法顺序
+// 2015-08-27 Binggoo 1.重新修改PLC自动控制部分
 
 #include "stdafx.h"
 // SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
@@ -84,6 +85,7 @@
 #define TIMER_LISENCE     1
 #define TIMER_PLC         2
 #define TIMER_PLC_LISTEN  3
+#define TIMER_PLC_AUTO    4
 
 // CCOXRayView
 
@@ -212,7 +214,9 @@ CCOXRayView::CCOXRayView()
 	m_bPLCConnected = FALSE;
 	m_bPLCStarted = FALSE;
 	m_bPLCRunning = FALSE;
-	m_dwCurrentLocation = 1;
+	m_dwCurrentLocation = 0;
+	m_dwTotolLocations = 1;
+	m_dwSleepBeforeSnap = 500;
 
 	m_nTimeOutTimes = 0;
 
@@ -297,6 +301,9 @@ void CCOXRayView::OnInitialUpdate()
 	m_nCaptureFrames = m_Ini.GetUInt(_T("PaneSetting"),_T("CaptureFrames"),16);
 	strCaptureFrames.Format(_T("%d"),m_nCaptureFrames);
 	strSavePath = m_Ini.GetString(_T("SaveSetting"),_T("SavePath"),m_strAppPath + DEFAULT_SAVE_PATH);
+
+	m_dwTotolLocations = m_Ini.GetUInt(_T("CommSetting"),_T("LoctionNums"),1);
+	m_dwSleepBeforeSnap = m_Ini.GetUInt(_T("CommSetting"),_T("SleepBeforeSnap"),500);
 
 	if (m_pRightDialogBar == NULL)
 	{
@@ -1130,7 +1137,7 @@ void CCOXRayView::OnTimer(UINT_PTR nIDEvent)
 						int nIndex = m_pStatusBar->CommandToIndex(ID_INDICATOR_PLC_LOCATION);
 
 						CString strLocation;
-						strLocation.Format(_T("位置%d"),m_dwCurrentLocation);
+						strLocation.Format(_T("位置%d / %d"),m_dwCurrentLocation,m_dwTotolLocations);
 
 						m_pStatusBar->SetPaneText(nIndex,strLocation);
 					}
@@ -1234,6 +1241,83 @@ void CCOXRayView::OnTimer(UINT_PTR nIDEvent)
 			}
 
 			SetTimer(TIMER_PLC_LISTEN,500,NULL);
+		}
+		break;
+
+	case TIMER_PLC_AUTO:
+		{
+			KillTimer(TIMER_PLC_AUTO);
+			if (m_PLCommand.IsConnected())
+			{
+				DWORD dwD2010 = 0;
+				int nLen = 1;
+				if (!m_PLCommand.ReadPLCD(D2010,nLen,&dwD2010))
+				{
+					CString strMsg;
+					if (m_PLCommand.m_ErrorType == Error_System)
+					{
+						strMsg.Format(_T("读PLC位置失败，%s"),CUtils::GetErrorMsg(m_PLCommand.m_dwLastError));
+					}
+					else
+					{
+						strMsg.Format(_T("读PLC位置返回错误，错误代码0x%04X"),m_PLCommand.m_dwLastError);
+					}
+
+					m_pStatusBar->SetPaneText(0,strMsg);
+
+					AfxMessageBox(strMsg);
+				}
+				else
+				{
+					DWORD dwD2101 = 1;
+					if (dwD2010 > m_dwTotolLocations)
+					{
+						// 超过总的位置数，发送开门命令，位置写1
+						
+						dwD2101 = 1;
+
+						if (!m_PLCommand.WritePLCD(D2101,1,&dwD2101))
+						{
+							CString strMsg;
+							if (m_PLCommand.m_ErrorType == Error_System)
+							{
+								strMsg.Format(_T("写PLC失败，%s"),CUtils::GetErrorMsg(m_PLCommand.m_dwLastError));
+							}
+							else
+							{
+								strMsg.Format(_T("写PLC返回错误，错误代码0x%04X"),m_PLCommand.m_dwLastError);
+							}
+
+							m_pStatusBar->SetPaneText(0,strMsg);
+
+							AfxMessageBox(strMsg);
+
+						}
+					}
+					else if (dwD2010 != m_dwCurrentLocation && dwD2010 != 0)
+					{
+						// 位置改变，拍照
+						if (m_bStopSnap)
+						{
+							DWORD dwSleep = m_dwSleepBeforeSnap;
+
+							if (dwD2010 == 1)
+							{
+								dwSleep += 1000;
+							}
+							Sleep(dwSleep);
+
+							OnBtnStaticCap();
+						}
+
+					}
+
+					m_dwCurrentLocation = dwD2010;
+
+				}
+			}
+
+			SetTimer(TIMER_PLC_AUTO,500,NULL);
 		}
 		break;
 	}
@@ -1410,7 +1494,7 @@ void CCOXRayView::OnBtnStaticCap()
 			int nIndex = m_pStatusBar->CommandToIndex(ID_INDICATOR_PLC_LOCATION);
 
 			CString strLocation;
-			strLocation.Format(_T("位置%d"),m_dwCurrentLocation);
+			strLocation.Format(_T("位置%d / %d"),m_dwCurrentLocation,m_dwTotolLocations);
 
 			m_pStatusBar->SetPaneText(nIndex,strLocation);
 
@@ -3524,10 +3608,14 @@ void CCOXRayView::OnBtnSave()
 	}
 	*/
 
-	AfxMessageBox(_T("保存图片成功!"));
+	if (!m_bPLCStarted)
+	{
+		AfxMessageBox(_T("保存图片成功!"));
+	}
 
 	if (m_bPLCStarted && m_bPLCConnected && m_nInpectMode == MANUL_MODE)
 	{
+		/*
 		//报告PLC采集完成
 		DWORD dwD2100 = CMD_PC_RUNNING | CMD_SCAN_END;
 		if (!m_PLCommand.WritePLCD(D2100,1,&dwD2100))
@@ -3544,7 +3632,34 @@ void CCOXRayView::OnBtnSave()
 
 			AfxMessageBox(strMsg);
 		}
+		*/
+
+		// 通知PLC到下一个位置
+		DWORD dwD2101 = m_dwCurrentLocation + 1;
+		if (dwD2101 > m_dwTotolLocations)
+		{
+			dwD2101 = 1;
+		}
+
+		if (!m_PLCommand.WritePLCD(D2101,1,&dwD2101))
+		{
+			CString strMsg;
+			if (m_PLCommand.m_ErrorType == Error_System)
+			{
+				strMsg.Format(_T("写PLC失败，%s"),CUtils::GetErrorMsg(m_PLCommand.m_dwLastError));
+			}
+			else
+			{
+				strMsg.Format(_T("写PLC返回错误，错误代码0x%04X"),m_PLCommand.m_dwLastError);
+			}
+
+			m_pStatusBar->SetPaneText(0,strMsg);
+
+			AfxMessageBox(strMsg);
+
+		}
 	}
+	
 }
 
 
@@ -4096,9 +4211,14 @@ void CCOXRayView::OnBtnStart()
 		return;
 	}
 
+	m_dwTotolLocations = m_Ini.GetUInt(_T("CommSetting"),_T("LoctionNums"),1);
+	m_dwSleepBeforeSnap = m_Ini.GetUInt(_T("CommSetting"),_T("SleepBeforeSnap"),500);
+
+	/*
 	// PLC回到初始位置
 	BeginWaitCursor();
 
+	
 	DWORD dwD2100 = CMD_PC_RUNNING | CMD_PLC_RESET;
 
 	if (!m_PLCommand.WritePLCD(D2100,1,&dwD2100))
@@ -4130,6 +4250,15 @@ void CCOXRayView::OnBtnStart()
 	}
 
 	EndWaitCursor();
+	*/
+	m_pRightDialogBar->m_PageImgCapture.m_BtnPlcStart.EnableWindow(FALSE);
+	m_pRightDialogBar->m_PageImgCapture.m_BtnPlcStop.EnableWindow(TRUE);
+	m_pRightDialogBar->m_PageImgCapture.m_ComboBoxCtlMode.EnableWindow(FALSE);
+
+	m_bPLCStarted = TRUE;
+
+	SetTimer(TIMER_PLC_AUTO,500,NULL);
+
 }
 
 
@@ -4137,10 +4266,11 @@ void CCOXRayView::OnBtnStop()
 {
 	// TODO: 在此添加命令处理程序代码
 
-	KillTimer(TIMER_PLC);
-	KillTimer(TIMER_PLC_LISTEN);
-
-	m_nTimeOutTimes = 0;
+// 	KillTimer(TIMER_PLC);
+// 	KillTimer(TIMER_PLC_LISTEN);
+// 
+// 	m_nTimeOutTimes = 0;
+	KillTimer(TIMER_PLC_AUTO);
 
 	m_pRightDialogBar->m_PageImgCapture.m_BtnPlcStart.EnableWindow(TRUE);
 	m_pRightDialogBar->m_PageImgCapture.m_BtnPlcStop.EnableWindow(FALSE);

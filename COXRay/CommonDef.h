@@ -69,7 +69,8 @@ typedef enum _ENUM_PLC_PORT
 	D2000 = 2000,
 	D2001 = 2001,
 	D2010 = 2010,
-	D2100 = 2100
+	D2100 = 2100,
+	D2101 = 2101
 }PLC_Port;
 
 typedef enum _ENUM_INSPECT_MODE

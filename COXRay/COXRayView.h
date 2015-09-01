@@ -79,6 +79,8 @@ protected:
 
 	DWORD m_dwCurrentLocation;
 	UINT  m_nTimeOutTimes;
+	DWORD m_dwTotolLocations;
+	DWORD m_dwSleepBeforeSnap;
 
 	CLightControl m_LightControl;
 	BOOL m_bLightOn;
